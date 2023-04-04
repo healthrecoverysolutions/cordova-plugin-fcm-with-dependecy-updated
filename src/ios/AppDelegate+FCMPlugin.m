@@ -211,10 +211,6 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
     return apnsToken;
 }
 
-+ (void)deleteInstanceId:(void (^)(NSError *error))handler {
-    [[FIRInstanceID instanceID] deleteIDWithHandler:handler];
-}
-
 + (void)hasPushPermission:(void (^)(NSNumber* yesNoOrNil))block {
     if ([UNUserNotificationCenter class] == nil) {
         [FCMPluginIOS9Support hasPushPermission:block];
