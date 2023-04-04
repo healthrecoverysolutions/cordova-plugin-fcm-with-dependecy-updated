@@ -191,4 +191,8 @@ export class FCMPlugin {
     public unsubscribeFromTopic(topic: string): Promise<void> {
         return execAsPromise('unsubscribeFromTopic', [topic])
     }
+
+    public initDifferentAccount(accountInfo: any): Promise<void> {
+        return execAsPromise('initDifferentAccount', [accountInfo])
+    }
 }

@@ -46,6 +46,9 @@ FCMPluginOnIonic.prototype.subscribeToTopic = function (topic) {
 FCMPluginOnIonic.prototype.unsubscribeFromTopic = function (topic) {
     return window.FCM.unsubscribeFromTopic(topic)
 }
+FCMPluginOnIonic.prototype.initDifferentAccount = function (accountInfo) {
+    return window.FCM.initDifferentAccount(accountInfo)
+}
 
 export { FCMPluginOnIonic }
 export var FCM = new FCMPluginOnIonic()

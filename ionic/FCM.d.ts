@@ -2,6 +2,7 @@ import { Observable } from 'rxjs';
 import { INotificationPayload } from '../typings/INotificationPayload';
 import { IRequestPushPermissionOptions } from '../typings/IRequestPushPermissionOptions';
 import { IChannelConfiguration } from '../typings/IChannelConfiguration';
+import {AccountInfo} from '../typings/accountInfo';
 /**
  * @name FCM
  * @description
@@ -105,5 +106,7 @@ export declare class FCMPluginOnIonic {
      * @returns {Promise<void>} Async call to native implementation
      */
     unsubscribeFromTopic(topic: string): Promise<void>;
+
+    initDifferentAccount(accountInfo: AccountInfo): Promise<void>;
 }
 export declare const FCM: FCMPluginOnIonic;
