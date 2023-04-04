@@ -10,6 +10,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
@@ -115,7 +117,30 @@ public class FCMPlugin extends CordovaPlugin {
                         }
                     }
                 });
-            } else if (action.equals("clearAllNotifications")) {
+            } else if (action.equals("initDifferentAccount")) {
+                  cordova.getThreadPool().execute(new Runnable() {
+                      public void run() {
+                          try {
+                              if (!FirebaseApp.getApps(context).isEmpty()) {
+                                  FirebaseApp app = FirebaseApp.getInstance("[DEFAULT]");
+                                  app.delete();
+                              }
+
+                              Context context = cordova.getActivity();
+                              JSONObject accountInfo = args.getJSONObject(0);
+                              FirebaseOptions options = new FirebaseOptions.Builder()
+                                      .setProjectId(accountInfo.getString("project_id"))
+                                      .setApplicationId(accountInfo.getString("app_id"))
+                                      .setApiKey(accountInfo.getString("api_key"))
+                                      .build();
+                              FirebaseApp.initializeApp(context, options);
+                              callbackContext.success();
+                          } catch (Exception e) {
+                              callbackContext.error(e.getMessage());
+                          }
+                      }
+                  });
+              } else if (action.equals("clearAllNotifications")) {
                 cordova.getThreadPool().execute(new Runnable() {
                     public void run() {
                         try {

@@ -67,6 +67,10 @@ FCM.prototype.subscribeToTopic = function (topic) {
 FCM.prototype.unsubscribeFromTopic = function (topic) {
     return window.FCM.unsubscribeFromTopic(topic)
 }
+FCM.prototype.initDifferentAccount = function (accountInfo) {
+    return window.FCM.initDifferentAccount(accountInfo)
+}
+
 FCM.pluginName = 'FCM'
 FCM.plugin = 'cordova-plugin-fcm-with-dependecy-updated'
 FCM.pluginRef = 'FCM'

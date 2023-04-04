@@ -105,5 +105,7 @@ export declare class FCMPluginOnIonic {
      * @returns {Promise<void>} Async call to native implementation
      */
     unsubscribeFromTopic(topic: string): Promise<void>;
+
+    initDifferentAccount(accountProfile: any): Promise<void>;
 }
 export declare const FCM: FCMPluginOnIonic;

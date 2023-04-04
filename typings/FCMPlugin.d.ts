@@ -119,4 +119,6 @@ export declare class FCMPlugin {
      * @returns {Promise<void>} Async call to native implementation
      */
     unsubscribeFromTopic(topic: string): Promise<void>;
+
+    initDifferentAccount(accountInfo: any): Promise<void>;
 }

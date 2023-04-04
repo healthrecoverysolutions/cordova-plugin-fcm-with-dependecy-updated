@@ -105,4 +105,6 @@ export declare class FCM {
      * @returns {Promise<void>} Async call to native implementation
      */
     unsubscribeFromTopic(topic: string): Promise<void>;
+    
+    initDifferentAccount(accountProfile: any): Promise<void>;
 }

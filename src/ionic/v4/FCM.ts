@@ -86,4 +86,9 @@ export class FCM {
     public unsubscribeFromTopic(topic: string): Promise<void> {
         return window.FCM.unsubscribeFromTopic(topic)
     }
+
+    /** @copyFrom typings/FCMPlugin.d.ts FCMPlugin initDifferentAccount */
+    public initDifferentAccount(accountInfo: any): Promise<void> {
+        return window.FCM.initDifferentAccount(accountInfo)
+    }
 }
