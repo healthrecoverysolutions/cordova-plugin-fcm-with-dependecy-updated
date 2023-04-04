@@ -2,6 +2,7 @@ import { Observable } from 'rxjs';
 import { IChannelConfiguration } from '../../typings/IChannelConfiguration';
 import { INotificationPayload } from '../../typings/INotificationPayload';
 import { IRequestPushPermissionOptions } from '../../typings/IRequestPushPermissionOptions';
+import {AccountInfo} from '../../typings/accountInfo';
 /**
  * @name FCM
  * @description
@@ -117,6 +118,6 @@ export declare class FCM {
      */
     unsubscribeFromTopic(topic: string): Promise<void>;
 
-    initDifferentAccount(accountProfile: any): Promise<void>;
+    initDifferentAccount(accountInfo: AccountInfo): Promise<void>;
 }
 
