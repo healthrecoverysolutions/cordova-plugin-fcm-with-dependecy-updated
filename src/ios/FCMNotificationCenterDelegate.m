@@ -66,12 +66,6 @@ NSMutableArray<NSObject<UNUserNotificationCenterDelegate>*> *subNotificationCent
             notificationPresentationOptions |= possibleNotificationPresentationOptions;
         }
     };
-    SEL thisMethodSelector = NSSelectorFromString(@"userNotificationCenter:willPresentNotification:withCompletionHandler:");
-    for (NSObject<UNUserNotificationCenterDelegate>* subNotificationCenterDelegate in subNotificationCenterDelegates) {
-        if([subNotificationCenterDelegate respondsToSelector:thisMethodSelector]) {
-            [subNotificationCenterDelegate userNotificationCenter:center willPresentNotification:notification withCompletionHandler:subDelegateCompletionHandler];
-        }
-    }
     completionHandler(notificationPresentationOptions);
 }
 
@@ -84,12 +78,6 @@ didReceiveNotificationResponse:(UNNotificationResponse *)response
     [AppDelegate setInitialPushPayload:jsonData];
     [FCMPlugin.fcmPlugin notifyOfMessage:jsonData];
     void (^noopCompletionHandler)(void) = ^(){};
-    SEL thisMethodSelector = NSSelectorFromString(@"userNotificationCenter:didReceiveNotificationResponse:withCompletionHandler:");
-    for (NSObject<UNUserNotificationCenterDelegate>* subNotificationCenterDelegate in subNotificationCenterDelegates) {
-        if([subNotificationCenterDelegate respondsToSelector:thisMethodSelector]) {
-            [subNotificationCenterDelegate userNotificationCenter:center didReceiveNotificationResponse:response withCompletionHandler:noopCompletionHandler];
-        }
-    }
     completionHandler();
 }
 
