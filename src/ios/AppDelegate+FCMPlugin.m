@@ -246,4 +246,9 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
     return [hexString copy];
 }
 
+// Added deleteInstanceId method in AppDelegate+FCMPlugin.m as it is being consumed in logout.
++ (void)deleteInstanceId:(void (^)(NSError *error))handler {
+    //Replaced deleteIDWithHandler with deleteDataWithCompletion to delete FCM token.
+    [[FIRMessaging messaging] deleteDataWithCompletion:handler];
+}
 @end
