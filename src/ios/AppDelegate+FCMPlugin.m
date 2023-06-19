@@ -250,5 +250,7 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
 + (void)deleteInstanceId:(void (^)(NSError *error))handler {
     //Replaced deleteIDWithHandler with deleteDataWithCompletion to delete FCM token.
     [[FIRMessaging messaging] deleteDataWithCompletion:handler];
+    //Added deleteWithCompletion method to delete FCM instance on logout. 
+    [[FIRInstallations installations] deleteWithCompletion:handler];
 }
 @end
