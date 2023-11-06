@@ -133,6 +133,11 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
             NSLog(@"app opened by user tap");
             lastPush = [NSJSONSerialization dataWithJSONObject:userInfoMutable options:0 error:&error];
             [AppDelegate setInitialPushPayload:lastPush];
+        } else if(application.applicationState == UIApplicationStateActive) {
+            NSError *error;
+            NSDictionary *userInfoMutable = [userInfo mutableCopy];
+            NSData *jsonData = [NSJSONSerialization dataWithJSONObject:userInfoMutable options:0 error:&error];
+            [FCMPlugin.fcmPlugin notifyOfMessage:jsonData];
         }
 
         completionHandler(UIBackgroundFetchResultNoData);
