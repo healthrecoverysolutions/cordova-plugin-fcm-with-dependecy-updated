@@ -10,6 +10,7 @@
     "issue": "https://github.com/andrehtissot/cordova-plugin-fcm-with-dependecy-updated/issues",
     "author": "André Augusto Tissot",
     "scripts": {
+        "version": "node ./scripts/version-sync.js",
         "build": "npm run build:www;npm run build:ionic",
         "build:www": "cd ./src/www;npm run build",
         "build:ionic": "cd ./src/ionic;npm run build",
