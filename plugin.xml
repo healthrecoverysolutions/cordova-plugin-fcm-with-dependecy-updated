@@ -81,7 +81,8 @@
 
 	<!-- IOS CONFIGURATION -->
 	<platform name="ios">
-		<preference name="IOS_FIREBASE_MESSAGING_VERSION" default="~> 7.4.0" />
+		<preference name="IOS_FIREBASE_MESSAGING_VERSION" default="6.21.0" />
+		<preference name="IOS_FIREBASE_ANALYTICS_VERSION" default="6.21.0" />
 		<config-file target="config.xml" parent="/*">
 			<feature name="FCMPlugin">
 				<param name="ios-package" value="FCMPlugin"/>
@@ -121,10 +122,11 @@
 		<!-- FIREBASE COCOAPODS-->
 		<podspec>
 			<config>
-                <source url="https://github.com/CocoaPods/Specs.git"/>
+            	<source url="https://cdn.cocoapods.org/"/>
 			</config>
 			<pods>
 				<pod name="Firebase/Messaging" spec="$IOS_FIREBASE_MESSAGING_VERSION"/>
+				<pod name="Firebase/Analytics" spec="$IOS_FIREBASE_ANALYTICS_VERSION"/>
 			</pods>
 		</podspec>
 	</platform>
