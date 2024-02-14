@@ -40,6 +40,7 @@
 		<preference name="ANDROID_FIREBASE_BOM_VERSION" default="29.0.1" />
 		<preference name="ANDROID_GOOGLE_SERVICES_VERSION" default="4.3.4" />
 		<preference name="ANDROID_GRADLE_TOOLS_VERSION" default="4.1.0" />
+		<preference name="ANDROID_INHERIT_GOOGLE_SERVICES" default="false" />
 
 		<config-file target="AndroidManifest.xml" parent="/manifest/application">
 			<activity android:name="com.gae.scaffolder.plugin.FCMPluginActivity" android:exported="true" android:launchMode="singleTop">
@@ -77,6 +78,10 @@
 		<source-file src="src/android/com/gae/scaffolder/plugin/FCMPluginActivity.java" target-dir="src/com/gae/scaffolder/plugin" />
 		<source-file src="src/android/com/gae/scaffolder/plugin/interfaces/OnFinishedListener.java" target-dir="src/com/gae/scaffolder/plugin/interfaces" />
 		<source-file src="src/android/com/gae/scaffolder/plugin/interfaces/TokenListeners.java" target-dir="src/com/gae/scaffolder/plugin/interfaces" />
+
+		<hook src="scripts/copy_google_service_files.js" type="after_prepare" />
+		<hook src="scripts/copy_google_service_files.js" type="after_plugin_add" />
+		<hook src="scripts/fix-android-gradle-build.js" type="after_plugin_add" />
 	</platform>
 
 	<!-- IOS CONFIGURATION -->
@@ -131,8 +136,5 @@
 		</podspec>
 	</platform>
 
-	<!-- COPY FCM CONFIG FILES TO PLATFORM BEFORE COMPILING -->
-	<hook src="scripts/copy_google_service_files.js" type="after_prepare" />
-	<hook src="scripts/copy_google_service_files.js" type="after_plugin_add" />
 	<hook src="scripts/install_ionic_dependencies.bat" type="after_plugin_install" />
 </plugin>
