@@ -136,7 +136,6 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
         } else if(application.applicationState == UIApplicationStateActive) {
             NSError *error;
             NSDictionary *userInfoMutable = [userInfo mutableCopy];
-            [userInfoMutable setValue:@(YES) forKey:@"wasTapped"];
             NSLog(@"app active");
             NSData *payload = [NSJSONSerialization dataWithJSONObject:userInfoMutable options:0 error:&error];
             [FCMPlugin.fcmPlugin notifyOfMessage:payload];
