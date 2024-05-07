@@ -133,6 +133,12 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
             NSLog(@"app opened by user tap");
             lastPush = [NSJSONSerialization dataWithJSONObject:userInfoMutable options:0 error:&error];
             [AppDelegate setInitialPushPayload:lastPush];
+        } else if(application.applicationState == UIApplicationStateActive) {
+            NSError *error;
+            NSDictionary *userInfoMutable = [userInfo mutableCopy];
+            NSLog(@"app active");
+            NSData *payload = [NSJSONSerialization dataWithJSONObject:userInfoMutable options:0 error:&error];
+            [FCMPlugin.fcmPlugin notifyOfMessage:payload];
         }
 
         completionHandler(UIBackgroundFetchResultNoData);
@@ -250,7 +256,7 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
 + (void)deleteInstanceId:(void (^)(NSError *error))handler {
     //Replaced deleteIDWithHandler with deleteDataWithCompletion to delete FCM token.
     [[FIRMessaging messaging] deleteDataWithCompletion:handler];
-    //Added deleteWithCompletion method to delete FCM instance on logout. 
+    //Added deleteWithCompletion method to delete FCM instance on logout.
     [[FIRInstallations installations] deleteWithCompletion:handler];
 }
 @end
