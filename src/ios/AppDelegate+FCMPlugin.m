@@ -39,6 +39,11 @@ FCMNotificationCenterDelegate *notificationCenterDelegate;
         notificationCenterDelegate = [NSClassFromString(@"FCMNotificationCenterDelegate") alloc];
         [notificationCenterDelegate configureForNotifications];
     }
+    // For iOS message (sent via FCM)
+    // Fixed DEV-15364 
+    // Setting delegate to track firebase events.
+    [FIRMessaging messaging].delegate = self;
+
     [self performSelector:@selector(configureForNotifications) withObject:self afterDelay:0.3f];
 
     return YES;
@@ -48,8 +53,6 @@ FCMNotificationCenterDelegate *notificationCenterDelegate;
     if([FIRApp defaultApp] == nil) {
         [FIRApp configure];
     }
-    // For iOS message (sent via FCM)
-    [FIRMessaging messaging].delegate = self;
 }
 
 + (void)requestPushPermission:(void (^)(BOOL yesOrNo, NSError* _Nullable error))block withOptions:(NSDictionary*)options {

@@ -17,7 +17,7 @@
   specific language governing permissions and limitations
   under the License.
 -->
-<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-fcm-with-dependecy-updated" version="7.8.2">
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-fcm-with-dependecy-updated" version="7.8.3">
 	<name>Cordova FCM Push Plugin</name>
 	<description>Google Firebase Cloud Messaging Cordova Push Plugin fork with dependecy updated</description>
 	<license>MIT</license>
@@ -109,8 +109,6 @@
 		<config-file target="*-Info.plist" parent="FirebaseAppDelegateProxyEnabled">
 			<false/>
 		</config-file>
-
-		<resource-file src="src/ios/Assets/GoogleService-Info.plist" target="Resources/GoogleService-Info.plist" />
 
 		<header-file src="src/ios/FCMPlugin.h" />
 		<source-file src="src/ios/FCMPlugin.m" />
