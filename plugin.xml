@@ -70,6 +70,7 @@
 				<preference name="AndroidXEnabled" value="true" />
 			</platform>
 		</config-file>
+		<framework src="com.jakewharton.timber:timber:5.0.1" />
 		<framework src="src/android/FCMPlugin.gradle" custom="true" type="gradleReference"/>
 
 		<source-file src="src/android/com/gae/scaffolder/plugin/FCMPlugin.java" target-dir="src/com/gae/scaffolder/plugin" />

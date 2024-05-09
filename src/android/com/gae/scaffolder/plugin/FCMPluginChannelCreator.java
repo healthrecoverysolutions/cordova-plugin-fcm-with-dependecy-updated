@@ -6,7 +6,6 @@ import android.app.NotificationManager;
 import android.media.AudioAttributes;
 import android.content.Context;
 import android.os.Build;
-import android.util.Log;
 import android.net.Uri;
 
 import org.apache.cordova.CallbackContext;
@@ -14,9 +13,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import timber.log.Timber;
+
 public class FCMPluginChannelCreator {
     private static int INVALID_INT_OPTION = -1000;
-    private static final String TAG = FCMPlugin.TAG;
     private Context context;
 
     public FCMPluginChannelCreator(Context context) {
@@ -96,7 +96,7 @@ public class FCMPluginChannelCreator {
             return;
         }
         try {
-            Log.d(TAG, "Channel started with "+args.toString());
+            Timber.d("Channel started with "+args.toString());
             ChannelConfig channelConfig = new ChannelConfig(args.getJSONObject(0));
             NotificationChannel channel = new NotificationChannel(channelConfig.id, channelConfig.name, channelConfig.importance);
             if(channelConfig.visibility != INVALID_INT_OPTION) {
@@ -125,9 +125,9 @@ public class FCMPluginChannelCreator {
                     .getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
             callbackContext.success();
-            Log.d(TAG, "Channel finished as "+channelConfig.toJSONObject().toString());
+            Timber.d("Channel finished as "+channelConfig.toJSONObject().toString());
         } catch (Exception e) {
-            Log.w(TAG, "createNotificationChannel: "+e.getMessage());
+            Timber.w("createNotificationChannel: "+e.getMessage());
             callbackContext.error(e.getMessage());
         }
     }
