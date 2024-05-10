@@ -24,7 +24,14 @@ var FCMLogger = (function () {
         this.mOnLogCallback = null;
     }
     FCMLogger.prototype.onLog = function (callback) {
-        this.mOnLogCallback = typeof callback === 'function' ? callback : null;
+        if (typeof callback === 'function') {
+            this.mOnLogCallback = callback;
+            for (var _i = 0, _a = this.buffer; _i < _a.length; _i++) {
+                var ev = _a[_i];
+                this.mOnLogCallback(ev);
+            }
+            this.buffer = [];
+        }
     };
     FCMLogger.prototype.log = function (message) {
         var params = [];

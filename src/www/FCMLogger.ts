@@ -19,7 +19,14 @@ export class FCMLogger {
     private mOnLogCallback: FCMLogEventCallback | null = null;
 
     public onLog(callback: FCMLogEventCallback): void {
-        this.mOnLogCallback = typeof callback === 'function' ? callback : null;
+        if (typeof callback === 'function') {
+            this.mOnLogCallback = callback;
+            // notify new callback of any buffered events
+            for (const ev of this.buffer) {
+                this.mOnLogCallback(ev);
+            }
+            this.buffer = [];
+        }
     }
 
     public log(message: string, ...params: any[]): void {
