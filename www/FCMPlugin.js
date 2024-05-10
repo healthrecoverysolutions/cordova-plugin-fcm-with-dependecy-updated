@@ -18,15 +18,65 @@ var asDisposableListener = function (eventTarget, eventName, callback, options) 
     };
 };
 
+var FCMLogger = (function () {
+    function FCMLogger() {
+        this.buffer = [];
+        this.mOnLogCallback = null;
+    }
+    FCMLogger.prototype.onLog = function (callback) {
+        this.mOnLogCallback = typeof callback === 'function' ? callback : null;
+    };
+    FCMLogger.prototype.log = function (message) {
+        var params = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            params[_i - 1] = arguments[_i];
+        }
+        this.captureLogEvent(0, message, params);
+    };
+    FCMLogger.prototype.warn = function (message) {
+        var params = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            params[_i - 1] = arguments[_i];
+        }
+        this.captureLogEvent(1, message, params);
+    };
+    FCMLogger.prototype.error = function (message) {
+        var params = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            params[_i - 1] = arguments[_i];
+        }
+        this.captureLogEvent(2, message, params);
+    };
+    FCMLogger.prototype.captureLogEvent = function (level, message, params) {
+        var ev = { level: level, message: message, params: params, timestamp: Date.now() };
+        if (this.mOnLogCallback) {
+            this.mOnLogCallback(ev);
+        }
+        else {
+            this.bufferEvent(ev);
+        }
+    };
+    FCMLogger.prototype.bufferEvent = function (ev) {
+        this.buffer.push(ev);
+        while (this.buffer.length > 1000) {
+            this.buffer.shift();
+        }
+    };
+    return FCMLogger;
+}());
+var logger = new FCMLogger();
+
 var bridgeNativeEvents = function (eventTarget) {
-    var onError = function (error) { return console.log('FCM: Error listening to native events', error); };
+    var onError = function (error) {
+        logger.error('Error listening to native events', error);
+    };
     var onEvent = function (data) {
         try {
             var _a = JSON.parse(data), eventName = _a[0], eventData = _a[1];
             eventTarget.dispatchEvent(new CustomEvent(eventName, { detail: eventData }));
         }
         catch (error) {
-            console.log('FCM: Error parsing native event data', error);
+            logger.error('Error parsing native event data', error);
         }
     };
     window.cordova.exec(onEvent, onError, 'FCMPlugin', 'startJsEventBridge', []);
@@ -37,13 +87,16 @@ var FCMPlugin = (function () {
         var _this = this;
         this.eventTarget = document.createElement('div');
         execAsPromise('ready')
-            .catch(function (error) { return console.log('FCM: Ready error: ', error); })
+            .catch(function (error) { return logger.error('Ready error: ', error); })
             .then(function () {
-            console.log('FCM: Ready!');
+            logger.log('FCM Ready!');
             bridgeNativeEvents(_this.eventTarget);
         });
-        console.log('FCM: has been created');
+        logger.log('plugin webview wrapper has been created');
     }
+    FCMPlugin.prototype.onLog = function (callback) {
+        logger.onLog(callback);
+    };
     FCMPlugin.prototype.clearAllNotifications = function () {
         return execAsPromise('clearAllNotifications');
     };

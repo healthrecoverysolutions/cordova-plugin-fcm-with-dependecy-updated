@@ -2,6 +2,7 @@ import { IChannelConfiguration } from './IChannelConfiguration';
 import { IRequestPushPermissionOptions } from './IRequestPushPermissionOptions';
 import { INotificationPayload } from './INotificationPayload';
 import { IDisposable } from './IDisposable';
+import { FCMLogEventCallback } from './FCMLogger';
 /**
  * @name FCM
  * @description
@@ -25,6 +26,7 @@ export declare class FCMPlugin {
      */
     readonly eventTarget: EventTarget;
     constructor();
+    onLog(callback: FCMLogEventCallback): void;
     /**
      * Removes existing push notifications from the notifications center
      *
@@ -119,6 +121,5 @@ export declare class FCMPlugin {
      * @returns {Promise<void>} Async call to native implementation
      */
     unsubscribeFromTopic(topic: string): Promise<void>;
-
     initDifferentAccount(accountInfo: any): Promise<void>;
 }

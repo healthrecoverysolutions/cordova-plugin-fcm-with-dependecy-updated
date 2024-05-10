@@ -5,7 +5,7 @@ import type { IDisposable } from './IDisposable'
 import { execAsPromise } from './execAsPromise'
 import { asDisposableListener } from './eventAsDisposable'
 import { bridgeNativeEvents } from './bridgeNativeEvents'
-import { logger } from './FCMLogger'
+import { FCMLogEventCallback, logger } from './FCMLogger'
 declare var window: {
     cordova: {
         platformId: string
@@ -45,6 +45,10 @@ export class FCMPlugin {
                 bridgeNativeEvents(this.eventTarget)
             })
         logger.log('plugin webview wrapper has been created')
+    }
+
+    public onLog(callback: FCMLogEventCallback): void {
+        logger.onLog(callback);
     }
 
     /**
