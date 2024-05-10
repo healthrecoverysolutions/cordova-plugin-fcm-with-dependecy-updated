@@ -80,8 +80,10 @@ public class FCMPlugin extends CordovaPlugin {
 
         try {
             if (action.equals("ready")) {
+                Timber.d("=> FCMPlugin ready", callbackContext);
                 callbackContext.success();
             } else if (action.equals("startJsEventBridge")) {
+                Timber.d("=> FCMPlugin startJsEventBridge", callbackContext);
                 this.jsEventBridgeCallbackContext = callbackContext;
             } else if (action.equals("getToken")) {
                 cordova.getActivity().runOnUiThread(new Runnable() {

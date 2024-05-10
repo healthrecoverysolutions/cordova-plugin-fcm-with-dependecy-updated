@@ -12,10 +12,13 @@ declare var window: {
  * @returns {void}
  */
 export const bridgeNativeEvents = (eventTarget: EventTarget): void => {
+    console.log('bridgeNativeEvents', eventTarget)
     const onError = (error: Error) => console.log('FCM: Error listening to native events', error)
     const onEvent = (data: string) => {
         try {
             const [eventName, eventData] = JSON.parse(data)
+            console.log('eventName', eventName)
+            console.log('eventData', eventData)
             eventTarget.dispatchEvent(new CustomEvent(eventName, { detail: eventData }))
         } catch (error) {
             console.log('FCM: Error parsing native event data', error)

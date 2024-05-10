@@ -35,6 +35,7 @@ export class FCMPlugin {
     public readonly eventTarget: EventTarget
 
     constructor() {
+        console.log('FCM CONSTRUCTOR');
         // EventTarget is not fully supported on iOS and older Android
         this.eventTarget = document.createElement('div')
         execAsPromise('ready')
