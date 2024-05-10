@@ -5,6 +5,7 @@ import type { IDisposable } from './IDisposable'
 import { execAsPromise } from './execAsPromise'
 import { asDisposableListener } from './eventAsDisposable'
 import { bridgeNativeEvents } from './bridgeNativeEvents'
+import { logger } from './FCMLogger'
 declare var window: {
     cordova: {
         platformId: string
@@ -38,12 +39,12 @@ export class FCMPlugin {
         // EventTarget is not fully supported on iOS and older Android
         this.eventTarget = document.createElement('div')
         execAsPromise('ready')
-            .catch((error: Error) => console.log('FCM: Ready error: ', error))
+            .catch((error: Error) => logger.error('Ready error: ', error))
             .then(() => {
-                console.log('FCM: Ready!')
+                logger.log('FCM Ready!')
                 bridgeNativeEvents(this.eventTarget)
             })
-        console.log('FCM: has been created')
+        logger.log('plugin webview wrapper has been created')
     }
 
     /**
