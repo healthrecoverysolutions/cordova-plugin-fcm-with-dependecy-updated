@@ -31,8 +31,8 @@ import timber.log.Timber;
 public class FCMPlugin extends CordovaPlugin {
     private static final String notificationEventName = "notification";
     private static final String tokenRefreshEventName = "tokenRefresh";
+    private static final LinkedList<Pair<String, String>> messageBuffer = new LinkedList<>();
     private static FCMPlugin instance = null;
-    private static LinkedList<Pair<String, String>> messageBuffer = new LinkedList<>();
     private Map<String, Object> initialPushPayload;
     private CallbackContext jsEventBridgeCallbackContext;
 
@@ -283,16 +283,16 @@ public class FCMPlugin extends CordovaPlugin {
         });
     }
 
-    private static boolean hasValidInstance() {
-        return FCMPlugin.instance != null
-            && FCMPlugin.instance.jsEventBridgeCallbackContext != null;
+    private static boolean isWaitingForValidInstance() {
+        return FCMPlugin.instance == null
+            || FCMPlugin.instance.jsEventBridgeCallbackContext == null;
     }
 
     private static void dispatchJSEvent(String eventName, String stringifiedJSONValue) {
         String jsEventData = "[\"" + eventName + "\"," + stringifiedJSONValue + "]";
         PluginResult dataResult = new PluginResult(PluginResult.Status.OK, jsEventData);
         dataResult.setKeepCallback(true);
-        if (!hasValidInstance()) {
+        if (isWaitingForValidInstance()) {
             Timber.d("\tUnable to send event due to unreachable bridge context");
             return;
         }
@@ -317,21 +317,23 @@ public class FCMPlugin extends CordovaPlugin {
     }
 
     private static void enqueueJSEvent(String eventName, String stringifiedJSONValue) {
-        if (!hasValidInstance()) {
+        if (isWaitingForValidInstance()) {
             Timber.d("enqueueJSEvent() saving to buffer until plugin is ready");
             messageBuffer.add(new Pair<>(eventName, stringifiedJSONValue));
             purgeExcessMessages();
             return;
         }
 
-        Timber.d("enqueueJSEvent() flushing %s buffered event(s)", messageBuffer.size());
-        Pair<String, String> buffered = messageBuffer.removeFirst();
-
         // flush all events that were buffered before the plugin was ready,
         // or if the plugin had to be regenerated at some point
-        while (buffered != null) {
-            dispatchJSEvent(buffered.first, buffered.second);
-            buffered = messageBuffer.removeFirst();
+        if (!messageBuffer.isEmpty()) {
+            Timber.d("enqueueJSEvent() flushing %s buffered event(s)", messageBuffer.size());
+            for (Pair<String, String> pair : messageBuffer) {
+                if (pair != null) {
+                    dispatchJSEvent(pair.first, pair.second);
+                }
+            }
+            messageBuffer.clear();
         }
 
         Timber.d("enqueueJSEvent() dispatching most recent event");
