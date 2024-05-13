@@ -5,6 +5,7 @@ import type { FCMPlugin } from '../../www/FCMPlugin'
 import type { IChannelConfiguration } from '../../www/IChannelConfiguration'
 import type { INotificationPayload } from '../../www/INotificationPayload'
 import type { IRequestPushPermissionOptions } from '../../www/IRequestPushPermissionOptions'
+import type { FCMLogEventCallback } from '../../www/FCMLogger'
 
 declare namespace window {
     export let FCM: FCMPlugin
@@ -25,6 +26,11 @@ export class FCM {
     public static getPluginRef: () => string = IonicNativePlugin.getPluginRef
     public static getPluginInstallName: () => string = IonicNativePlugin.getPluginInstallName
     public static getSupportedPlatforms: () => string[] = IonicNativePlugin.getSupportedPlatforms
+
+    /** @copyFrom typings/FCMPlugin.d.ts FCMPlugin onLog */
+    public onLog(callback: FCMLogEventCallback): void {
+        window.FCM.onLog(callback as any);
+    }
 
     /** @copyFrom typings/FCMPlugin.d.ts FCMPlugin clearAllNotifications */
     public clearAllNotifications(): Promise<void> {

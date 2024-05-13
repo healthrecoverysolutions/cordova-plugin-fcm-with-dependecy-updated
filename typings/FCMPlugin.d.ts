@@ -26,6 +26,9 @@ export declare class FCMPlugin {
      */
     readonly eventTarget: EventTarget;
     constructor();
+    /**
+     * Register a callback to handle logs produced by this wrapper object.
+     */
     onLog(callback: FCMLogEventCallback): void;
     /**
      * Removes existing push notifications from the notifications center

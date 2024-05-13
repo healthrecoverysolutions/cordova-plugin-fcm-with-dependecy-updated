@@ -47,6 +47,9 @@ export class FCMPlugin {
         logger.log('plugin webview wrapper has been created')
     }
 
+    /**
+     * Register a callback to handle logs produced by this wrapper object.
+     */
     public onLog(callback: FCMLogEventCallback): void {
         logger.onLog(callback);
     }
