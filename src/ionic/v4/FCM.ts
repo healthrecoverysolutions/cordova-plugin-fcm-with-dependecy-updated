@@ -5,6 +5,7 @@ import type { FCMPlugin } from '../../../typings/FCMPlugin'
 import type { IChannelConfiguration } from '../../../typings/IChannelConfiguration'
 import type { IRequestPushPermissionOptions } from '../../../typings/IRequestPushPermissionOptions'
 import type { INotificationPayload } from '../../../typings/INotificationPayload'
+import type { FCMLogEventCallback } from '../../../typings/FCMLogger'
 
 declare namespace window {
     export let FCM: FCMPlugin
@@ -20,6 +21,11 @@ declare namespace window {
 })
 @Injectable()
 export class FCM {
+    /** @copyFrom typings/FCMPlugin.d.ts FCMPlugin onLog */
+    public onLog(callback: FCMLogEventCallback): void {
+        window.FCM.onLog(callback as any);
+    }
+
     /** @copyFrom typings/FCMPlugin.d.ts FCMPlugin clearAllNotifications */
     public clearAllNotifications(): Promise<void> {
         return window.FCM.clearAllNotifications()

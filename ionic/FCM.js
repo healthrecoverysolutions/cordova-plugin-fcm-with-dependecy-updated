@@ -1,6 +1,9 @@
 import { Subject } from 'rxjs'
 
 function FCMPluginOnIonic() {}
+FCMPluginOnIonic.prototype.onLog = function (callback) {
+    window.FCM.onLog(callback)
+}
 FCMPluginOnIonic.prototype.clearAllNotifications = function () {
     return window.FCM.clearAllNotifications()
 }

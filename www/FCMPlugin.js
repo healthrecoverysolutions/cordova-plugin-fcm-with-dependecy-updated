@@ -1,23 +1,6 @@
 'use strict';
 
 
-var execAsPromise = function (command, args) {
-    if (args === void 0) { args = []; }
-    return new Promise(function (resolve, reject) {
-        window.cordova.exec(resolve, reject, 'FCMPlugin', command, args);
-    });
-};
-
-var asDisposableListener = function (eventTarget, eventName, callback, options) {
-    if (options === void 0) { options = {}; }
-    var once = options.once;
-    var handler = function (event) { return callback(event.detail); };
-    eventTarget.addEventListener(eventName, handler, { passive: true, once: once });
-    return {
-        dispose: function () { return eventTarget.removeEventListener(eventName, handler); },
-    };
-};
-
 var FCMLogger = (function () {
     function FCMLogger() {
         this.buffer = [];
@@ -72,6 +55,23 @@ var FCMLogger = (function () {
     return FCMLogger;
 }());
 var logger = new FCMLogger();
+
+var execAsPromise = function (command, args) {
+    if (args === void 0) { args = []; }
+    return new Promise(function (resolve, reject) {
+        window.cordova.exec(resolve, reject, 'FCMPlugin', command, args);
+    });
+};
+
+var asDisposableListener = function (eventTarget, eventName, callback, options) {
+    if (options === void 0) { options = {}; }
+    var once = options.once;
+    var handler = function (event) { return callback(event.detail); };
+    eventTarget.addEventListener(eventName, handler, { passive: true, once: once });
+    return {
+        dispose: function () { return eventTarget.removeEventListener(eventName, handler); },
+    };
+};
 
 var bridgeNativeEvents = function (eventTarget) {
     var onError = function (error) {

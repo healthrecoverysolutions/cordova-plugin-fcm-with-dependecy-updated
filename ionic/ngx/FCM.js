@@ -22,6 +22,9 @@ import { Subject } from 'rxjs'
 import { IonicNativePlugin } from '@ionic-native/core'
 
 function FCM() {}
+FCM.prototype.onLog = function (callback) {
+    window.FCM.onLog(callback)
+}
 FCM.prototype.clearAllNotifications = function () {
     return window.FCM.clearAllNotifications()
 }
@@ -70,7 +73,6 @@ FCM.prototype.unsubscribeFromTopic = function (topic) {
 FCM.prototype.initDifferentAccount = function (accountInfo) {
     return window.FCM.initDifferentAccount(accountInfo)
 }
-
 FCM.pluginName = 'FCM'
 FCM.plugin = 'cordova-plugin-fcm-with-dependecy-updated'
 FCM.pluginRef = 'FCM'
