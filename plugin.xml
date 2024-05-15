@@ -134,6 +134,4 @@
 			</pods>
 		</podspec>
 	</platform>
-
-	<hook src="scripts/install_ionic_dependencies.bat" type="after_plugin_install" />
 </plugin>
