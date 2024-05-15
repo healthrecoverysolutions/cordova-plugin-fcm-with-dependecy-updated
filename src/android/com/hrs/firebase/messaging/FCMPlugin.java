@@ -1,4 +1,4 @@
-package com.gae.scaffolder.plugin;
+package com.hrs.firebase.messaging;
 
 import androidx.core.app.NotificationManagerCompat;
 
@@ -6,7 +6,7 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.util.Pair;
 
-import com.gae.scaffolder.plugin.interfaces.*;
+import com.hrs.firebase.messaging.interfaces.*;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
