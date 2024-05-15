@@ -77,7 +77,6 @@ export interface FirebaseMessagingEvent {
     data: INotificationPayload | ITokenPayload;
 }
 export type FirebaseMessagingEventCallback = (event: FirebaseMessagingEvent) => void;
-export type FirebaseMessagingEventErrorCallback = (data: string, error: any) => void;
 export declare class FirebaseMessagingCordovaInterface {
     constructor();
     private platformIs;

@@ -127,7 +127,6 @@ export interface FirebaseMessagingEvent {
 }
 
 export type FirebaseMessagingEventCallback = (event: FirebaseMessagingEvent) => void;
-export type FirebaseMessagingEventErrorCallback = (data: string, error: any) => void;
 
 function invoke<T>(method: string, ...args: any[]): Promise<T> {
     return cordovaExecPromise<T>(PLUGIN_NAME, method, args);
