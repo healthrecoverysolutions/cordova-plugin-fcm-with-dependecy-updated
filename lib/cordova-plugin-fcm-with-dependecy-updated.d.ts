@@ -50,6 +50,9 @@ export interface INotificationPayload {
      */
     [others: string]: any;
 }
+export interface ITokenPayload {
+    token: string;
+}
 export interface IRequestPushPermissionOptions {
     /**
      * Options exclusive for iOS 9 support
@@ -71,12 +74,11 @@ export interface IRequestPushPermissionOptions {
 }
 export interface FirebaseMessagingEvent {
     type: FirebaseMessagingEventType;
-    data: any;
+    data: INotificationPayload | ITokenPayload;
 }
 export type FirebaseMessagingEventCallback = (event: FirebaseMessagingEvent) => void;
 export type FirebaseMessagingEventErrorCallback = (data: string, error: any) => void;
 export declare class FirebaseMessagingCordovaInterface {
-    onEventParseError: FirebaseMessagingEventErrorCallback;
     constructor();
     private platformIs;
     setSharedEventDelegate(callback: FirebaseMessagingEventCallback, error: ErrorCallback): void;

@@ -41,8 +41,12 @@ public class FCMPlugin extends CordovaPlugin {
     private static final String EVENT_TYPE_NOTIFICATION = "notification";
     private static final String EVENT_TYPE_TOKEN_REFRESH = "tokenRefresh";
 
+    private static final String KEY_TYPE = "type";
+    private static final String KEY_DATA = "data";
+    private static final String KEY_TOKEN = "token";
+
     private static FCMPlugin instance = null;
-    private static final LinkedList<Pair<String, String>> bufferedEvents = new LinkedList<>();
+    private static final LinkedList<Pair<String, JSONObject>> bufferedEvents = new LinkedList<>();
     private static Map<String, Object> initialPushPayload = null;
     private CallbackContext sharedEventDelegate = null;
 
@@ -277,26 +281,26 @@ public class FCMPlugin extends CordovaPlugin {
         return instance == null || instance.sharedEventDelegate == null;
     }
 
-    private static void dispatchJSEvent(String eventName, String stringifiedJSONValue) throws JSONException {
+    private static void dispatchJSEvent(String eventName, JSONObject data) throws JSONException {
         if (isWaitingForValidPluginInstance()) {
             Timber.d("\tUnable to send event due to unreachable bridge context");
             return;
         }
 
-        JSONArray payload = new JSONArray();
-        payload.put(0, eventName);
-        payload.put(1, stringifiedJSONValue);
+        JSONObject eventPayload = new JSONObject();
+        eventPayload.put(KEY_TYPE, eventName);
+        eventPayload.put(KEY_DATA, data);
 
-        PluginResult dataResult = new PluginResult(PluginResult.Status.OK, payload);
+        PluginResult dataResult = new PluginResult(PluginResult.Status.OK, eventPayload);
         dataResult.setKeepCallback(true);
 
         FCMPlugin.instance.sharedEventDelegate.sendPluginResult(dataResult);
-        Timber.d("\tSent event: " + eventName + " with " + stringifiedJSONValue);
+        Timber.d("\tSent event: " + eventName + " with " + data.toString());
     }
 
-    private static void bufferJSEvent(String eventName, String stringifiedJSONValue) throws JSONException {
+    private static void bufferJSEvent(String eventName, JSONObject data) throws JSONException {
         if (isWaitingForValidPluginInstance()) {
-            bufferedEvents.add(new Pair<>(eventName, stringifiedJSONValue));
+            bufferedEvents.add(new Pair<>(eventName, data));
             // prevent this buffer from growing infinitely
             while (bufferedEvents.size() > 50) {
                 bufferedEvents.removeFirst();
@@ -306,7 +310,7 @@ public class FCMPlugin extends CordovaPlugin {
 
         if (!bufferedEvents.isEmpty()) {
             Timber.i("dispatching %s buffered events", bufferedEvents.size());
-            for (Pair<String, String> pair : bufferedEvents) {
+            for (Pair<String, JSONObject> pair : bufferedEvents) {
                 if (pair != null) {
                     dispatchJSEvent(pair.first, pair.second);
                 }
@@ -314,7 +318,7 @@ public class FCMPlugin extends CordovaPlugin {
             bufferedEvents.clear();
         }
 
-        dispatchJSEvent(eventName, stringifiedJSONValue);
+        dispatchJSEvent(eventName, data);
     }
 
     public static void setInitialPushPayload(Map<String, Object> payload) {
@@ -328,12 +332,12 @@ public class FCMPlugin extends CordovaPlugin {
     public static void sendPushPayload(Map<String, Object> payload) {
         Timber.d("==> FCMPlugin sendPushPayload");
         try {
-            JSONObject jo = new JSONObject();
+            JSONObject jsonPayload = new JSONObject();
             for (String key : payload.keySet()) {
-                jo.put(key, payload.get(key));
+                jsonPayload.put(key, payload.get(key));
                 Timber.d("\tpayload: " + key + " => " + payload.get(key));
             }
-            FCMPlugin.bufferJSEvent(EVENT_TYPE_NOTIFICATION, jo.toString());
+            FCMPlugin.bufferJSEvent(EVENT_TYPE_NOTIFICATION, jsonPayload);
         } catch (Exception e) {
             Timber.e(e, "\tERROR sendPushPayload: %s", e.getMessage());
         }
@@ -342,7 +346,8 @@ public class FCMPlugin extends CordovaPlugin {
     public static void sendTokenRefresh(String token) {
         Timber.d("==> FCMPlugin sendTokenRefresh");
         try {
-            FCMPlugin.bufferJSEvent(EVENT_TYPE_TOKEN_REFRESH, "\"" + token + "\"");
+            JSONObject data = new JSONObject().put(KEY_TOKEN, token);
+            FCMPlugin.bufferJSEvent(EVENT_TYPE_TOKEN_REFRESH, data);
         } catch (Exception e) {
             Timber.e(e, "\tERROR sendTokenRefresh: %s", e.getMessage());
         }

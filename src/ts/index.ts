@@ -2,6 +2,7 @@ export {
     FirebaseMessaging,
     FirebaseMessagingCordovaInterface,
     IChannelConfiguration,
+    ITokenPayload,
     INotificationPayload,
     IRequestPushPermissionOptions,
     FirebaseMessagingEvent,

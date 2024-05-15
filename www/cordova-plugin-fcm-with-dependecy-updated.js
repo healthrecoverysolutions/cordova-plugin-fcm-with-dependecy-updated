@@ -45,32 +45,15 @@ function invoke(method) {
     }
     return cordovaExecPromise(PLUGIN_NAME, method, args);
 }
-function parseNativeEvent(nativeEventData) {
-    var _a = JSON.parse(nativeEventData), type = _a[0], data = _a[1];
-    return { type: type, data: data };
-}
 var FirebaseMessagingCordovaInterface = /** @class */ (function () {
     function FirebaseMessagingCordovaInterface() {
-        this.onEventParseError = noop;
     }
     FirebaseMessagingCordovaInterface.prototype.platformIs = function (type) {
         var _a;
         return ((_a = window.cordova) === null || _a === void 0 ? void 0 : _a.platformId) === type;
     };
     FirebaseMessagingCordovaInterface.prototype.setSharedEventDelegate = function (callback, error) {
-        var _this = this;
-        var successWrapper = function (data) {
-            try {
-                var parsedEvent = parseNativeEvent(data);
-                callback(parsedEvent);
-            }
-            catch (err) {
-                if (typeof _this.onEventParseError === 'function') {
-                    _this.onEventParseError(data, err);
-                }
-            }
-        };
-        cordovaExec(PLUGIN_NAME, 'setSharedEventDelegate', successWrapper, error, []);
+        cordovaExec(PLUGIN_NAME, 'setSharedEventDelegate', callback, error, []);
     };
     /**
      * Removes existing push notifications from the notifications center

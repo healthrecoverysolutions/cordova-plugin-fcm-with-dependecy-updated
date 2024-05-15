@@ -96,6 +96,10 @@ export interface INotificationPayload {
     [others: string]: any
 }
 
+export interface ITokenPayload {
+    token: string;
+}
+
 export interface IRequestPushPermissionOptions {
     /**
      * Options exclusive for iOS 9 support
@@ -119,7 +123,7 @@ export interface IRequestPushPermissionOptions {
 
 export interface FirebaseMessagingEvent {
     type: FirebaseMessagingEventType;
-    data: any;
+    data: INotificationPayload | ITokenPayload;
 }
 
 export type FirebaseMessagingEventCallback = (event: FirebaseMessagingEvent) => void;
@@ -129,14 +133,7 @@ function invoke<T>(method: string, ...args: any[]): Promise<T> {
     return cordovaExecPromise<T>(PLUGIN_NAME, method, args);
 }
 
-function parseNativeEvent(nativeEventData: string): FirebaseMessagingEvent {
-    const [type, data] = JSON.parse(nativeEventData);
-    return {type, data};
-}
-
 export class FirebaseMessagingCordovaInterface {
-
-    public onEventParseError: FirebaseMessagingEventErrorCallback = noop;
 
     constructor() {
     }
@@ -146,17 +143,7 @@ export class FirebaseMessagingCordovaInterface {
     }
 
     public setSharedEventDelegate(callback: FirebaseMessagingEventCallback, error: ErrorCallback): void {
-        const successWrapper = (data: string): void => {
-            try {
-                const parsedEvent = parseNativeEvent(data);
-                callback(parsedEvent);
-            } catch (err) {
-                if (typeof this.onEventParseError === 'function') {
-                    this.onEventParseError(data, err);
-                }
-            }
-        };
-        cordovaExec(PLUGIN_NAME, 'setSharedEventDelegate', successWrapper, error, []);
+        cordovaExec(PLUGIN_NAME, 'setSharedEventDelegate', callback, error, []);
     }
 
     /**
