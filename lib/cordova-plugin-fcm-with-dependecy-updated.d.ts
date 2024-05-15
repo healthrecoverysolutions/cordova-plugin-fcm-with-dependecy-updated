@@ -1,34 +1,85 @@
-import { Observable } from 'rxjs';
-import { IChannelConfiguration } from '../../typings/IChannelConfiguration';
-import { INotificationPayload } from '../../typings/INotificationPayload';
-import { IRequestPushPermissionOptions } from '../../typings/IRequestPushPermissionOptions';
-import { FCMLogEventCallback } from '../../typings/FCMLogger';
-/**
- * @name FCM
- * @description
- * Easy plug&play push notification for Google Firebase FCM.
- *
- * @interfaces
- * INotificationPayload
- * IChannelConfiguration
- * IRequestPushPermissionOptions
- */
-export declare class FCM {
-    static pluginName: string;
-    static plugin: string;
-    static pluginRef: string;
-    static repo: string;
-    static platforms: string[];
-    static installed: () => boolean;
-    static getPlugin: () => any;
-    static getPluginName: () => string;
-    static getPluginRef: () => string;
-    static getPluginInstallName: () => string;
-    static getSupportedPlatforms: () => string[];
+type ErrorCallback = (error: any) => void;
+export declare enum FirebaseMessagingEventType {
+    NOTIFICATION = "notification",
+    TOKEN_REFRESH = "tokenRefresh"
+}
+export interface IChannelConfiguration {
     /**
-     * Register a callback to handle logs produced by this wrapper object.
+     * Channel id, used in the android_channel_id push payload key
      */
-    onLog(callback: FCMLogEventCallback): void;
+    id: string;
+    /**
+     * Channel name, visible for the user
+     */
+    name: string;
+    /**
+     * Channel description, visible for the user
+     */
+    description?: string;
+    /**
+     * Importance for notifications of this channel
+     * https://developer.android.com/guide/topics/ui/notifiers/notifications#importance
+     */
+    importance?: 'none' | 'min' | 'low' | 'default' | 'high';
+    /**
+     * Visibility for notifications of this channel
+     * https://developer.android.com/training/notify-user/build-notification#lockscreenNotification
+     */
+    visibility?: 'public' | 'private' | 'secret';
+    /**
+     * Default sound resource for notifications of this channel
+     * The file should located as resources/raw/[resource name].mp3
+     */
+    sound?: string;
+    /**
+     * Enable lights for notifications of this channel
+     */
+    lights?: boolean;
+    /**
+     * Enable vibration for notifications of this channel
+     */
+    vibration?: boolean;
+}
+export interface INotificationPayload {
+    /**
+     * Determines whether the notification was tapped or not
+     */
+    wasTapped: boolean;
+    /**
+     * FCM notification data hash item
+     */
+    [others: string]: any;
+}
+export interface IRequestPushPermissionOptions {
+    /**
+     * Options exclusive for iOS 9 support
+     */
+    ios9Support?: {
+        /**
+         * How long it will wait for a decision from the user before returning `false`
+         *
+         * @default 10
+         */
+        timeout?: number;
+        /**
+         * How long between each permission verification
+         *
+         * @default 0.3
+         */
+        interval?: number;
+    };
+}
+export interface FirebaseMessagingEvent {
+    type: FirebaseMessagingEventType;
+    data: any;
+}
+export type FirebaseMessagingEventCallback = (event: FirebaseMessagingEvent) => void;
+export type FirebaseMessagingEventErrorCallback = (data: string, error: any) => void;
+export declare class FirebaseMessagingCordovaInterface {
+    onEventParseError: FirebaseMessagingEventErrorCallback;
+    constructor();
+    private platformIs;
+    setSharedEventDelegate(callback: FirebaseMessagingEventCallback, error: ErrorCallback): void;
     /**
      * Removes existing push notifications from the notifications center
      *
@@ -81,24 +132,6 @@ export declare class FCM {
      */
     hasPermission(): Promise<boolean>;
     /**
-     * Event firing when receiving new notifications
-     *
-     * @argument {{ once?: boolean }} options once defines if the listener is only trigger once
-     * @returns {Observable<INotificationPayload>} An object to listen for notification data
-     */
-    onNotification(options?: {
-        once?: boolean;
-    }): Observable<INotificationPayload>;
-    /**
-     * Event firing when receiving a new Firebase token
-     *
-     * @argument {{ once?: boolean }} options once defines if the listener is only trigger once
-     * @returns {Observable<string>} An object to listen for the token
-     */
-    onTokenRefresh(options?: {
-        once?: boolean;
-    }): Observable<string>;
-    /**
      * Request push notification permission, alerting the user if it not have yet decided
      *
      * @param {IRequestPushPermissionOptions} options Options for push request
@@ -121,12 +154,7 @@ export declare class FCM {
      * @returns {Promise<void>} Async call to native implementation
      */
     unsubscribeFromTopic(topic: string): Promise<void>;
-    /**
-     * Unsubscribes you from a [topic](https://firebase.google.com/docs/notifications/android/console-topics)
-     *
-     * @param {string} topic Topic to be unsubscribed from
-     *
-     * @returns {Promise<void>} Async call to native implementation
-     */
     initDifferentAccount(accountInfo: any): Promise<void>;
 }
+export declare const FirebaseMessaging: FirebaseMessagingCordovaInterface;
+export {};
