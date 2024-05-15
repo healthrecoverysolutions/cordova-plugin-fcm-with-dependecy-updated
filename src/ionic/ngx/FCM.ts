@@ -32,6 +32,11 @@ export class FCM {
         window.FCM.onLog(callback as any);
     }
 
+    /** @copyFrom typings/FCMPlugin.d.ts FCMPlugin init */
+    public init(): Promise<void> {
+        window.FCM.init();
+    }
+
     /** @copyFrom typings/FCMPlugin.d.ts FCMPlugin clearAllNotifications */
     public clearAllNotifications(): Promise<void> {
         return window.FCM.clearAllNotifications()
