@@ -17,8 +17,8 @@ export class FCMPluginOnIonic {
     }
 
     /** @copyFrom typings/FCMPlugin.d.ts FCMPlugin init */
-    public init(): void {
-        window.FCM.init();
+    public init(): Promise<void> {
+        return window.FCM.init();
     }
 
     /** @copyFrom typings/FCMPlugin.d.ts FCMPlugin clearAllNotifications */

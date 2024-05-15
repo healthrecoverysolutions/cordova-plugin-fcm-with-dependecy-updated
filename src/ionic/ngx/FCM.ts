@@ -34,7 +34,7 @@ export class FCM {
 
     /** @copyFrom typings/FCMPlugin.d.ts FCMPlugin init */
     public init(): Promise<void> {
-        window.FCM.init();
+        return window.FCM.init();
     }
 
     /** @copyFrom typings/FCMPlugin.d.ts FCMPlugin clearAllNotifications */

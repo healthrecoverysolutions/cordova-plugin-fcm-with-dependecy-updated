@@ -30,6 +30,11 @@ export declare class FCMPlugin {
      * Register a callback to handle logs produced by this wrapper object.
      */
     onLog(callback: FCMLogEventCallback): void;
+
+    /**
+     * init js native bridge
+     */
+    init(): Promise<void>;
     /**
      * Removes existing push notifications from the notifications center
      *
