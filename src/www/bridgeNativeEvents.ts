@@ -15,8 +15,8 @@ declare var window: {
  */
 export const bridgeNativeEvents = (eventTarget: EventTarget): void => {
     const onError = (error: Error) => {
-        logger.error('Error listening to native events', error);
-    };
+        logger.error('Error listening to native events', error)
+    }
     const onEvent = (data: string) => {
         try {
             const [eventName, eventData] = JSON.parse(data)
@@ -24,6 +24,6 @@ export const bridgeNativeEvents = (eventTarget: EventTarget): void => {
         } catch (error) {
             logger.error('Error parsing native event data', error)
         }
-    };
+    }
     window.cordova.exec(onEvent, onError, 'FCMPlugin', 'startJsEventBridge', [])
 }

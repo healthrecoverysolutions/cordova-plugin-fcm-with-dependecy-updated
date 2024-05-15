@@ -29,6 +29,8 @@ export declare class FCM {
      * Register a callback to handle logs produced by this wrapper object.
      */
     onLog(callback: FCMLogEventCallback): void;
+
+    init(): Promise<void>;
     /**
      * Removes existing push notifications from the notifications center
      *
@@ -129,4 +131,6 @@ export declare class FCM {
      * @returns {Promise<void>} Async call to native implementation
      */
     initDifferentAccount(accountInfo: any): Promise<void>;
+
+    init():void;
 }

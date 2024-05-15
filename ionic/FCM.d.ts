@@ -19,6 +19,10 @@ export declare class FCMPluginOnIonic {
      */
     onLog(callback: FCMLogEventCallback): void;
     /**
+     * Initialize jsNativeBridge
+     */
+    init(): Promise<void>;
+    /**
      * Removes existing push notifications from the notifications center
      *
      * @returns {Promise<void>} Async call to native implementation

@@ -38,12 +38,16 @@ export class FCMPlugin {
     constructor() {
         // EventTarget is not fully supported on iOS and older Android
         this.eventTarget = document.createElement('div')
-        execAsPromise('ready')
+    }
+
+    public init(): Promise<void> {
+        return execAsPromise('ready')
             .catch((error: Error) => logger.error('Ready error: ', error))
             .then(() => {
                 logger.log('FCM Ready!')
                 bridgeNativeEvents(this.eventTarget)
             })
+            .catch((error: Error) => logger.error('bridgeNativeEvents error: ', error))
         logger.log('plugin webview wrapper has been created')
     }
 
@@ -51,7 +55,7 @@ export class FCMPlugin {
      * Register a callback to handle logs produced by this wrapper object.
      */
     public onLog(callback: FCMLogEventCallback): void {
-        logger.onLog(callback);
+        logger.onLog(callback)
     }
 
     /**

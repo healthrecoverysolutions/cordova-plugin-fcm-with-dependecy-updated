@@ -25,6 +25,9 @@ function FCM() {}
 FCM.prototype.onLog = function (callback) {
     window.FCM.onLog(callback)
 }
+FCM.prototype.init = function () {
+    return window.FCM.init()
+}
 FCM.prototype.clearAllNotifications = function () {
     return window.FCM.clearAllNotifications()
 }

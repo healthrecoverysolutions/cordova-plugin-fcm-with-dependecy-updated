@@ -91,19 +91,22 @@ var bridgeNativeEvents = function (eventTarget) {
 
 var FCMPlugin = (function () {
     function FCMPlugin() {
-        var _this = this;
         this.eventTarget = document.createElement('div');
-        execAsPromise('ready')
-            .catch(function (error) { return logger.error('Ready error: ', error); })
-            .then(function () {
-            logger.log('FCM Ready!');
-            bridgeNativeEvents(_this.eventTarget);
-        });
         logger.log('plugin webview wrapper has been created');
     }
     FCMPlugin.prototype.onLog = function (callback) {
         logger.onLog(callback);
     };
+
+    FCMPlugin.prototype.init = function () {
+        return execAsPromise('ready')
+            .catch((error) => { return logger.error('Ready error: ', error); })
+            .then(() => {
+                logger.log('FCM Ready!');
+                bridgeNativeEvents(this.eventTarget);
+            });
+    };
+
     FCMPlugin.prototype.clearAllNotifications = function () {
         return execAsPromise('clearAllNotifications');
     };
