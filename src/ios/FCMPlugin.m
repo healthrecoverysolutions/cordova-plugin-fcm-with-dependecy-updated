@@ -52,7 +52,7 @@ static FCMPlugin *fcmPluginInstance;
     }];
 }
 
-- (void)startJsEventBridge:(CDVInvokedUrlCommand *)command {
+- (void)setSharedEventDelegate:(CDVInvokedUrlCommand *)command {
     NSLog(@"start Js Event Bridge");
     jsEventBridgeCallbackId = command.callbackId;
 }
