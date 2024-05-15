@@ -1,10 +1,10 @@
-package com.gae.scaffolder.plugin;
+package com.hrs.firebase.messaging;
 
 import androidx.core.app.NotificationManagerCompat;
 import android.app.NotificationManager;
 import android.content.Context;
 
-import com.gae.scaffolder.plugin.interfaces.*;
+import com.hrs.firebase.messaging.interfaces.*;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;

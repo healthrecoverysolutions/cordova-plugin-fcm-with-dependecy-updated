@@ -1,4 +1,4 @@
-package com.gae.scaffolder.plugin;
+package com.hrs.firebase.messaging;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
