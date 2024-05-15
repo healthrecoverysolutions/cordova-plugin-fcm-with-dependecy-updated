@@ -49,6 +49,7 @@ public class FCMPlugin extends CordovaPlugin {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        Timber.i("onDestroy()");
         instance = null;
     }
 
@@ -289,13 +290,13 @@ public class FCMPlugin extends CordovaPlugin {
     }
 
     private static void dispatchJSEvent(String eventName, String stringifiedJSONValue) {
-        String jsEventData = "[\"" + eventName + "\"," + stringifiedJSONValue + "]";
-        PluginResult dataResult = new PluginResult(PluginResult.Status.OK, jsEventData);
-        dataResult.setKeepCallback(true);
         if (isWaitingForValidInstance()) {
             Timber.d("\tUnable to send event due to unreachable bridge context");
             return;
         }
+        String jsEventData = "[\"" + eventName + "\"," + stringifiedJSONValue + "]";
+        PluginResult dataResult = new PluginResult(PluginResult.Status.OK, jsEventData);
+        dataResult.setKeepCallback(true);
         FCMPlugin.instance.jsEventBridgeCallbackContext.sendPluginResult(dataResult);
         Timber.d("Sent event: %s with %s", eventName, stringifiedJSONValue);
     }
