@@ -19,8 +19,8 @@
 
 @implementation AppDelegate (MCPlugin)
 
-static NSData *lastPush;
-static NSData *initialPushPayload;
+static NSDictionary *lastPush;
+static NSDictionary *initialPushPayload;
 static NSString *fcmToken;
 static NSString *apnsToken;
 NSString *const kGCMMessageIDKey = @"gcm.message_id";
@@ -126,25 +126,21 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
 
         // If the app is in the background, keep it for later, in case it's not tapped.
         if(application.applicationState == UIApplicationStateBackground) {
-            NSError *error;
-            NSDictionary *userInfoMutable = [userInfo mutableCopy];
-            [userInfoMutable setValue:@(NO) forKey:@"wasTapped"];
+            NSMutableDictionary *jsonData = [userInfo mutableCopy];
+            [jsonData setValue:@(NO) forKey:@"wasTapped"];
             DDLogDebug(@"app active");
-            lastPush = [NSJSONSerialization dataWithJSONObject:userInfoMutable options:0 error:&error];
+            lastPush = jsonData;
             [AppDelegate setInitialPushPayload:lastPush];
         } else if(application.applicationState == UIApplicationStateInactive) {
-            NSError *error;
-            NSDictionary *userInfoMutable = [userInfo mutableCopy];
-            [userInfoMutable setValue:@(YES) forKey:@"wasTapped"];
+            NSMutableDictionary *jsonData = [userInfo mutableCopy];
+            [jsonData setValue:@(YES) forKey:@"wasTapped"];
             DDLogDebug(@"app opened by user tap");
-            lastPush = [NSJSONSerialization dataWithJSONObject:userInfoMutable options:0 error:&error];
+            lastPush = jsonData;
             [AppDelegate setInitialPushPayload:lastPush];
         } else if(application.applicationState == UIApplicationStateActive) {
-            NSError *error;
-            NSDictionary *userInfoMutable = [userInfo mutableCopy];
+            NSMutableDictionary *jsonData = [userInfo mutableCopy];
             DDLogDebug(@"app active");
-            NSData *payload = [NSJSONSerialization dataWithJSONObject:userInfoMutable options:0 error:&error];
-            [FCMPlugin.fcmPlugin notifyOfMessage:payload];
+            [FCMPlugin dispatchNotification:jsonData];
         }
 
         completionHandler(UIBackgroundFetchResultNoData);
@@ -159,14 +155,14 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
     DDLogDebug(@"Device FCM Token: %@", deviceToken);
     if(deviceToken == nil) {
         fcmToken = nil;
-        [FCMPlugin.fcmPlugin notifyFCMTokenRefresh:nil];
+        [FCMPlugin dispatchTokenRefresh:nil];
         return;
     }
     // Notify about received token.
     NSDictionary *dataDict = [NSDictionary dictionaryWithObject:deviceToken forKey:@"token"];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"FCMToken" object:nil userInfo:dataDict];
     fcmToken = deviceToken;
-    [FCMPlugin.fcmPlugin notifyFCMTokenRefresh:deviceToken];
+    [FCMPlugin dispatchTokenRefresh:deviceToken];
     [self connectToFcm];
 }
 
@@ -183,35 +179,33 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
     DDLogDebug(@"app become active");
-    [FCMPlugin.fcmPlugin appEnterForeground];
     [self connectToFcm];
 }
 
 // [BEGIN disconnect_from_fcm]
 - (void)applicationDidEnterBackground:(UIApplication *)application {
     DDLogDebug(@"app entered background");
-    [FCMPlugin.fcmPlugin appEnterBackground];
     DDLogDebug(@"Disconnected from FCM");
 }
 // [END disconnect_from_fcm]
 
-+ (void)setLastPush:(NSData*)push {
++ (void)setLastPush:(NSDictionary*)push {
     lastPush = push;
 }
 
-+ (void)setInitialPushPayload:(NSData*)payload {
++ (void)setInitialPushPayload:(NSDictionary*)payload {
     if(initialPushPayload == nil) {
         initialPushPayload = payload;
     }
 }
 
-+ (NSData*)getLastPush {
-    NSData* returnValue = lastPush;
++ (NSDictionary*)getLastPush {
+    NSDictionary* returnValue = lastPush;
     lastPush = nil;
     return returnValue;
 }
 
-+ (NSData*)getInitialPushPayload {
++ (NSDictionary*)getInitialPushPayload {
     return initialPushPayload;
 }
 

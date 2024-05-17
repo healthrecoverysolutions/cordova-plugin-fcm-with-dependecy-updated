@@ -17,23 +17,59 @@
 
 static BOOL appInForeground = YES;
 
-static NSString *notificationEventName = @"notification";
-static NSString *tokenRefreshCallback = @"tokenRefresh";
-static NSString *jsEventBridgeCallbackId;
-static FCMPlugin *fcmPluginInstance;
+static NSString *EVENT_TYPE_NOTIFICATION = @"notification";
+static NSString *EVENT_TYPE_TOKEN_REFRESH = @"tokenRefresh";
+static NSString *jsEventBridgeCallbackId = nil;
+static FCMPlugin *fcmPluginInstance = nil;
 
-+ (FCMPlugin *)fcmPlugin {
-    return fcmPluginInstance;
++ (void)dispatchTokenRefresh:(NSString *)token {
+    if (fcmPluginInstance != nil) {
+        [fcmPluginInstance notifyFCMTokenRefresh:token];
+    } else {
+        DDLogWarn(@"dispatchTokenRefresh plugin instance not set");
+    }
 }
 
-- (void)ready:(CDVInvokedUrlCommand *)command {
-    DDLogDebug(@"Cordova view ready");
++ (void)dispatchNotification:(NSDictionary *)notification {
+    if (fcmPluginInstance != nil) {
+        [fcmPluginInstance notifyOfMessage:notification];
+    } else {
+        DDLogWarn(@"dispatchNotification plugin instance not set");
+    }
+}
+
++ (NSString *)toJsonString:(NSDictionary *)dictionary {
+    int NO_FORMATTING = 0;
+    NSError *error;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dictionary options:NO_FORMATTING error:&error];
+    
+    if (jsonData) {
+        return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+    }
+    
+    DDLogWarn(@"toJsonString error: %@", error);
+    return nil;
+}
+
+- (void)pluginInitialize {
+    DDLogDebug(@"FCM plugin ready");
     fcmPluginInstance = self;
-    [self.commandDelegate runInBackground:^{
-        CDVPluginResult* pluginResult = nil;
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-    }];
+     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onPause) name:UIApplicationDidEnterBackgroundNotification object:nil];
+     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onResume) name:UIApplicationWillEnterForegroundNotification object:nil];
+}
+
+- (void)onResume {
+    [self appEnterForeground];
+}
+
+- (void)onPause {
+    [self appEnterBackground];
+}
+
+- (void)onAppTerminate {
+    DDLogDebug(@"FCM plugin terminate");
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    fcmPluginInstance = nil;
 }
 
 - (void)hasPermission:(CDVInvokedUrlCommand *)command {
@@ -56,12 +92,12 @@ static FCMPlugin *fcmPluginInstance;
 }
 
 - (void)setSharedEventDelegate:(CDVInvokedUrlCommand *)command {
-    DDLogDebug(@"start Js Event Bridge");
     jsEventBridgeCallbackId = command.callbackId;
+    DDLogDebug(@"setSharedEventDelegate() %@", jsEventBridgeCallbackId);
 }
 
 - (void)getToken:(CDVInvokedUrlCommand *)command {
-    DDLogDebug(@"get Token");
+    DDLogDebug(@"getToken()");
     [self returnTokenOrRetry:^(NSString* fcmToken){
         CDVPluginResult* pluginResult = nil;
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:fcmToken];
@@ -152,25 +188,14 @@ static FCMPlugin *fcmPluginInstance;
 - (void)getInitialPushPayload:(CDVInvokedUrlCommand *)command {
     DDLogDebug(@"getInitialPushPayload");
     [self.commandDelegate runInBackground:^{
-        NSData* dataPayload = [AppDelegate getInitialPushPayload];
-        if (dataPayload == nil) {
+        NSDictionary* jsonData = [AppDelegate getInitialPushPayload];
+        if (jsonData == nil) {
             CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:nil];
             [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
             return;
         }
-        NSString *strUTF8 = [[NSString alloc] initWithData:dataPayload encoding:NSUTF8StringEncoding];
-        NSData *dataPayloadUTF8 = [strUTF8 dataUsingEncoding:NSUTF8StringEncoding];
-        NSError* error = nil;
-        NSDictionary *payloadDictionary = [NSJSONSerialization JSONObjectWithData:dataPayloadUTF8 options:0 error:&error];
-        if (error) {
-            NSString* errorMessage = [NSString stringWithFormat:@"%@ => '%@'", [error localizedDescription], strUTF8];
-            DDLogDebug(@"getInitialPushPayload error: %@", errorMessage);
-            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_JSON_EXCEPTION messageAsString:errorMessage];
-            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-            return;
-        }
-        DDLogDebug(@"getInitialPushPayload value: %@", payloadDictionary);
-        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:payloadDictionary];
+        DDLogDebug(@"getInitialPushPayload value: %@", [FCMPlugin toJsonString:jsonData]);
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:jsonData];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     }];
 }
@@ -191,27 +216,28 @@ static FCMPlugin *fcmPluginInstance;
     }];
 }
 
-- (void)notifyOfMessage:(NSData *)payload {
-    DDLogDebug(@"notifyOfMessage payload: %@", payload);
-    NSString* JSONString = [[NSString alloc] initWithBytes:[payload bytes] length:[payload length] encoding:NSUTF8StringEncoding];
-    [self dispatchJSEvent:notificationEventName withData:JSONString];
+- (void)notifyOfMessage:(NSDictionary *)payload {
+    DDLogDebug(@"notifyOfMessage payload: %@", [FCMPlugin toJsonString:payload]);
+    [self dispatchJSEvent:EVENT_TYPE_NOTIFICATION withData:payload];
 }
 
 - (void)notifyFCMTokenRefresh:(NSString *)token {
     DDLogDebug(@"notifyFCMTokenRefresh token: %@", token);
-    NSString* jsToken = [NSString stringWithFormat:@"\"%@\"", token];
-    [self dispatchJSEvent:tokenRefreshCallback withData:jsToken];
+    NSMutableDictionary* eventData = [[NSMutableDictionary alloc] init];
+    [eventData setValue:token forKey:@"token"];
+    [self dispatchJSEvent:EVENT_TYPE_TOKEN_REFRESH withData:eventData];
 }
 
-- (void)dispatchJSEvent:(NSString *)eventName withData:(NSString *)jsData {
+- (void)dispatchJSEvent:(NSString *)eventName withData:(NSDictionary *)jsData {
     if(jsEventBridgeCallbackId == nil) {
-        DDLogDebug(@"dispatchJSEvent: Unable to send event due to unreachable bridge context: %@ with %@", eventName, jsData);
+        DDLogDebug(@"dispatchJSEvent: Unable to send event due to unreachable bridge context: %@ with %@", eventName, [FCMPlugin toJsonString:jsData]);
         return;
     }
-    DDLogDebug(@"dispatchJSEvent: %@ with %@", eventName, jsData);
-    NSString* eventDataTemplate = @"[\"%@\",%@]";
-    NSString* eventData = [NSString stringWithFormat:eventDataTemplate, eventName, jsData];
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:eventData];
+    DDLogDebug(@"dispatchJSEvent: %@ with %@", eventName, [FCMPlugin toJsonString:jsData]);
+    NSMutableDictionary* eventPayload = [[NSMutableDictionary alloc] init];
+    [eventPayload setValue:eventName forKey:@"type"];
+    [eventPayload setValue:jsData forKey:@"data"];
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:eventPayload];
     [pluginResult setKeepCallbackAsBool:TRUE];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:jsEventBridgeCallbackId];
 }
@@ -223,9 +249,9 @@ static FCMPlugin *fcmPluginInstance;
 
 - (void)appEnterForeground {
     DDLogDebug(@"Set state foreground");
-    NSData* lastPush = [AppDelegate getLastPush];
+    NSDictionary* lastPush = [AppDelegate getLastPush];
     if (lastPush != nil) {
-        [FCMPlugin.fcmPlugin notifyOfMessage:lastPush];
+        [self notifyOfMessage:lastPush];
     }
     appInForeground = YES;
 }

@@ -114,12 +114,10 @@ static void (^requestPushPermissionCallback)(BOOL yesOrNo, NSError* _Nullable er
 
 + (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
     DDLogDebug(@"Message ID: %@", userInfo[@"gcm.message_id"]);
-    NSError *error;
-    NSDictionary *userInfoMutable = [userInfo mutableCopy];
+    NSMutableDictionary *jsonData = [userInfo mutableCopy];
     if (application.applicationState != UIApplicationStateActive) {
         DDLogDebug(@"New method with push callback: %@", userInfo);
-        [userInfoMutable setValue:@(YES) forKey:@"wasTapped"];
-        NSData *jsonData = [NSJSONSerialization dataWithJSONObject:userInfoMutable options:0 error:&error];
+        [jsonData setValue:@(YES) forKey:@"wasTapped"];
         DDLogDebug(@"APP WAS CLOSED DURING PUSH RECEPTION Saved data: %@", jsonData);
         [AppDelegate setInitialPushPayload:jsonData];
         [AppDelegate setLastPush:jsonData];
@@ -137,8 +135,7 @@ static void (^requestPushPermissionCallback)(BOOL yesOrNo, NSError* _Nullable er
 + (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
     DDLogDebug(@"Message ID: %@", userInfo[@"gcm.message_id"]);
     DDLogDebug(@"%@", userInfo);
-    NSError *error;
-    NSDictionary *userInfoMutable = [userInfo mutableCopy];
+    NSMutableDictionary *jsonData = [userInfo mutableCopy];
 
     // Has user tapped the notificaiton?
     // UIApplicationStateActive   - app is currently active
@@ -146,12 +143,9 @@ static void (^requestPushPermissionCallback)(BOOL yesOrNo, NSError* _Nullable er
     //                              foreground (user taps notification)
     if (application.applicationState == UIApplicationStateActive
         || application.applicationState == UIApplicationStateInactive) {
-        [userInfoMutable setValue:@(NO) forKey:@"wasTapped"];
+        [jsonData setValue:@(NO) forKey:@"wasTapped"];
         DDLogDebug(@"app active");
-        NSData *jsonData = [NSJSONSerialization dataWithJSONObject:userInfoMutable
-                                                           options:0
-                                                             error:&error];
-        [FCMPlugin.fcmPlugin notifyOfMessage:jsonData];
+        [FCMPlugin dispatchNotification:jsonData];
     }
     completionHandler(UIBackgroundFetchResultNoData);
 }

@@ -61,14 +61,9 @@ NSMutableArray<NSObject<UNUserNotificationCenterDelegate>*> *subNotificationCent
        willPresentNotification:(UNNotification *)notification
          withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler {
     DDLogDebug(@"FCMNotificationCenterDelegate.willPresentNotification!");
-    NSData *jsonData = [self extractJSONData:notification withWasTapped:NO];
-    [FCMPlugin.fcmPlugin notifyOfMessage:jsonData];
+    NSDictionary *jsonData = [self extractJSONData:notification withWasTapped:NO];
+    [FCMPlugin dispatchNotification:jsonData];
     __block UNNotificationPresentationOptions notificationPresentationOptions = UNNotificationPresentationOptionNone;
-    void (^subDelegateCompletionHandler)(UNNotificationPresentationOptions) = ^(UNNotificationPresentationOptions possibleNotificationPresentationOptions) {
-        if(notificationPresentationOptions < possibleNotificationPresentationOptions) {
-            notificationPresentationOptions |= possibleNotificationPresentationOptions;
-        }
-    };
     completionHandler(notificationPresentationOptions);
 }
 
@@ -77,32 +72,25 @@ NSMutableArray<NSObject<UNUserNotificationCenterDelegate>*> *subNotificationCent
 didReceiveNotificationResponse:(UNNotificationResponse *)response
          withCompletionHandler:(void (^)(void))completionHandler {
     DDLogDebug(@"FCMNotificationCenterDelegate.didReceiveNotificationResponse!");
-    NSData *jsonData = [self extractJSONData:response.notification withWasTapped:YES];
+    NSDictionary* jsonData = [self extractJSONData:response.notification withWasTapped:YES];
     [AppDelegate setInitialPushPayload:jsonData];
-    [FCMPlugin.fcmPlugin notifyOfMessage:jsonData];
-    void (^noopCompletionHandler)(void) = ^(){};
+    [FCMPlugin dispatchNotification:jsonData];
     completionHandler();
 }
 
-- (NSData*)extractJSONData:(UNNotification*)notification
+- (NSDictionary*)extractJSONData:(UNNotification*)notification
              withWasTapped:(BOOL)wasTapped {
     UNNotificationContent *content = notification.request.content;
     DDLogDebug(@"Push notification received: title=\"%@\" subtitle=\"%@\" body=\"%@\" badge=\"%@\"",
           content.title, content.subtitle, content.body, content.badge);
     DDLogDebug(@"Push data received: %@", content.userInfo);
-    NSDictionary *notificationData = [content.userInfo mutableCopy];
+    NSMutableDictionary *notificationData = [content.userInfo mutableCopy];
     if([notificationData objectForKey:@"wasTapped"] == nil) { [notificationData setValue:@(wasTapped) forKey:@"wasTapped"]; }
     if([notificationData objectForKey:@"title"] == nil) { [notificationData setValue:content.title forKey:@"title"]; }
     if([notificationData objectForKey:@"subtitle"] == nil) { [notificationData setValue:content.subtitle forKey:@"subtitle"]; }
     if([notificationData objectForKey:@"body"] == nil) { [notificationData setValue:content.body forKey:@"body"]; }
     if([notificationData objectForKey:@"badge"] == nil) { [notificationData setValue:content.badge forKey:@"badge"]; }
-    NSError *error;
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:notificationData options:0 error:&error];
-    if(error != NULL) {
-        DDLogDebug(@"Error on converting to JSON: %@", notificationData);
-        return NULL;
-    }
-    return jsonData;
+    return notificationData;
 }
 
 @end
