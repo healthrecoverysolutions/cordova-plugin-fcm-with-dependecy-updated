@@ -26,7 +26,6 @@ import java.util.Objects;
 import timber.log.Timber;
 
 public class FCMPlugin extends CordovaPlugin {
-    private static final String ACTION_READY = "ready";
     private static final String ACTION_SET_SHARED_EVENT_DELEGATE = "setSharedEventDelegate";
     private static final String ACTION_GET_TOKEN = "getToken";
     private static final String ACTION_GET_INITIAL_PUSH_PAYLOAD = "getInitialPushPayload";
@@ -74,9 +73,6 @@ public class FCMPlugin extends CordovaPlugin {
         Timber.d("==> FCMPlugin execute: %s", action);
         try {
             switch (action) {
-                case ACTION_READY:
-                    callbackContext.success();
-                    break;
                 case ACTION_SET_SHARED_EVENT_DELEGATE:
                     Timber.i("overridding event bridge");
                     sharedEventDelegate = callbackContext;
