@@ -128,9 +128,10 @@
 			<config>
             	<source url="https://cdn.cocoapods.org/"/>
 			</config>
-			<pods>
+			<pods use-frameworks="true">
 				<pod name="Firebase/Messaging" spec="$IOS_FIREBASE_MESSAGING_VERSION"/>
 				<pod name="Firebase/Analytics" spec="$IOS_FIREBASE_ANALYTICS_VERSION"/>
+				<pod name="CocoaLumberjack/Swift" spec="~> 3.8" />
 			</pods>
 		</podspec>
 	</platform>

@@ -3,6 +3,9 @@
 #import "FCMNotificationCenterDelegate.h"
 #import <objc/runtime.h>
 #import <Foundation/Foundation.h>
+#import <CocoaLumberjack/CocoaLumberjack.h>
+
+#define ddLogLevel DDLogLevelAll
 
 @import UserNotifications;
 
@@ -23,7 +26,7 @@ NSMutableArray<NSObject<UNUserNotificationCenterDelegate>*> *subNotificationCent
     }
     SEL thisMethodSelector = NSSelectorFromString(@"forceNotificationCenterDelegate:");
     if([self respondsToSelector:thisMethodSelector]) {
-//        NSLog(@"FCMNotificationCenterDelegate found: %@", [UNUserNotificationCenter currentNotificationCenter].delegate);
+//        DDLogDebug(@"FCMNotificationCenterDelegate found: %@", [UNUserNotificationCenter currentNotificationCenter].delegate);
         float remainingTimeout = timeout - 0.1f;
         NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:[self methodSignatureForSelector:thisMethodSelector]];
         [invocation setSelector:thisMethodSelector];
@@ -32,7 +35,7 @@ NSMutableArray<NSObject<UNUserNotificationCenterDelegate>*> *subNotificationCent
         [NSTimer scheduledTimerWithTimeInterval:0.1f invocation:invocation repeats:NO];
         return;
     }
-    NSLog(@"forceNotificationCenterDelegate selector not found in FCMNotificationCenterDelegate");
+    DDLogDebug(@"forceNotificationCenterDelegate selector not found in FCMNotificationCenterDelegate");
 }
 
 - (void)configureForNotifications {
@@ -47,7 +50,7 @@ NSMutableArray<NSObject<UNUserNotificationCenterDelegate>*> *subNotificationCent
     }
     if([UNUserNotificationCenter currentNotificationCenter].delegate != nil) {
         [subNotificationCenterDelegates addObject:[UNUserNotificationCenter currentNotificationCenter].delegate];
-//        NSLog(@"subNotificationCenterDelegates: %@", subNotificationCenterDelegates);
+//        DDLogDebug(@"subNotificationCenterDelegates: %@", subNotificationCenterDelegates);
     }
     [UNUserNotificationCenter currentNotificationCenter].delegate = self;
 }
@@ -57,7 +60,7 @@ NSMutableArray<NSObject<UNUserNotificationCenterDelegate>*> *subNotificationCent
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center
        willPresentNotification:(UNNotification *)notification
          withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler {
-    NSLog(@"FCMNotificationCenterDelegate.willPresentNotification!");
+    DDLogDebug(@"FCMNotificationCenterDelegate.willPresentNotification!");
     NSData *jsonData = [self extractJSONData:notification withWasTapped:NO];
     [FCMPlugin.fcmPlugin notifyOfMessage:jsonData];
     __block UNNotificationPresentationOptions notificationPresentationOptions = UNNotificationPresentationOptionNone;
@@ -73,7 +76,7 @@ NSMutableArray<NSObject<UNUserNotificationCenterDelegate>*> *subNotificationCent
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center
 didReceiveNotificationResponse:(UNNotificationResponse *)response
          withCompletionHandler:(void (^)(void))completionHandler {
-    NSLog(@"FCMNotificationCenterDelegate.didReceiveNotificationResponse!");
+    DDLogDebug(@"FCMNotificationCenterDelegate.didReceiveNotificationResponse!");
     NSData *jsonData = [self extractJSONData:response.notification withWasTapped:YES];
     [AppDelegate setInitialPushPayload:jsonData];
     [FCMPlugin.fcmPlugin notifyOfMessage:jsonData];
@@ -84,9 +87,9 @@ didReceiveNotificationResponse:(UNNotificationResponse *)response
 - (NSData*)extractJSONData:(UNNotification*)notification
              withWasTapped:(BOOL)wasTapped {
     UNNotificationContent *content = notification.request.content;
-    NSLog(@"Push notification received: title=\"%@\" subtitle=\"%@\" body=\"%@\" badge=\"%@\"",
+    DDLogDebug(@"Push notification received: title=\"%@\" subtitle=\"%@\" body=\"%@\" badge=\"%@\"",
           content.title, content.subtitle, content.body, content.badge);
-    NSLog(@"Push data received: %@", content.userInfo);
+    DDLogDebug(@"Push data received: %@", content.userInfo);
     NSDictionary *notificationData = [content.userInfo mutableCopy];
     if([notificationData objectForKey:@"wasTapped"] == nil) { [notificationData setValue:@(wasTapped) forKey:@"wasTapped"]; }
     if([notificationData objectForKey:@"title"] == nil) { [notificationData setValue:content.title forKey:@"title"]; }
@@ -96,7 +99,7 @@ didReceiveNotificationResponse:(UNNotificationResponse *)response
     NSError *error;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:notificationData options:0 error:&error];
     if(error != NULL) {
-        NSLog(@"Error on converting to JSON: %@", notificationData);
+        DDLogDebug(@"Error on converting to JSON: %@", notificationData);
         return NULL;
     }
     return jsonData;
