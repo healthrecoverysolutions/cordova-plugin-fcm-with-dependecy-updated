@@ -6,9 +6,6 @@
 #import <WebKit/WebKit.h>
 #import "FCMPlugin.h"
 #import <Firebase.h>
-#import <CocoaLumberjack/CocoaLumberjack.h>
-
-#define ddLogLevel DDLogLevelAll
 
 @interface FCMPlugin () {}
 @end
@@ -17,59 +14,23 @@
 
 static BOOL appInForeground = YES;
 
-static NSString *EVENT_TYPE_NOTIFICATION = @"notification";
-static NSString *EVENT_TYPE_TOKEN_REFRESH = @"tokenRefresh";
-static NSString *jsEventBridgeCallbackId = nil;
-static FCMPlugin *fcmPluginInstance = nil;
+static NSString *notificationEventName = @"notification";
+static NSString *tokenRefreshCallback = @"tokenRefresh";
+static NSString *jsEventBridgeCallbackId;
+static FCMPlugin *fcmPluginInstance;
 
-+ (void)dispatchTokenRefresh:(NSString *)token {
-    if (fcmPluginInstance != nil) {
-        [fcmPluginInstance notifyFCMTokenRefresh:token];
-    } else {
-        DDLogWarn(@"dispatchTokenRefresh plugin instance not set");
-    }
++ (FCMPlugin *)fcmPlugin {
+    return fcmPluginInstance;
 }
 
-+ (void)dispatchNotification:(NSDictionary *)notification {
-    if (fcmPluginInstance != nil) {
-        [fcmPluginInstance notifyOfMessage:notification];
-    } else {
-        DDLogWarn(@"dispatchNotification plugin instance not set");
-    }
-}
-
-+ (NSString *)toJsonString:(NSDictionary *)dictionary {
-    int NO_FORMATTING = 0;
-    NSError *error;
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dictionary options:NO_FORMATTING error:&error];
-    
-    if (jsonData) {
-        return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-    }
-    
-    DDLogWarn(@"toJsonString error: %@", error);
-    return nil;
-}
-
-- (void)pluginInitialize {
-    DDLogDebug(@"FCM plugin ready");
+- (void)ready:(CDVInvokedUrlCommand *)command {
+    NSLog(@"Cordova view ready");
     fcmPluginInstance = self;
-     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onPause) name:UIApplicationDidEnterBackgroundNotification object:nil];
-     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onResume) name:UIApplicationWillEnterForegroundNotification object:nil];
-}
-
-- (void)onResume {
-    [self appEnterForeground];
-}
-
-- (void)onPause {
-    [self appEnterBackground];
-}
-
-- (void)onAppTerminate {
-    DDLogDebug(@"FCM plugin terminate");
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    fcmPluginInstance = nil;
+    [self.commandDelegate runInBackground:^{
+        CDVPluginResult* pluginResult = nil;
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
 }
 
 - (void)hasPermission:(CDVInvokedUrlCommand *)command {
@@ -77,13 +38,13 @@ static FCMPlugin *fcmPluginInstance = nil;
         [AppDelegate hasPushPermission:^(NSNumber* pushPermission){
             __block CDVPluginResult *commandResult;
             if (pushPermission == nil) {
-                DDLogDebug(@"has push permission: unknown");
+                NSLog(@"has push permission: unknown");
                 commandResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
             } else if ([pushPermission boolValue] == YES) {
-                DDLogDebug(@"has push permission: true");
+                NSLog(@"has push permission: true");
                 commandResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:YES];
             } else if ([pushPermission boolValue] == NO) {
-                DDLogDebug(@"has push permission: false");
+                NSLog(@"has push permission: false");
                 commandResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:NO];
             }
             [self.commandDelegate sendPluginResult:commandResult callbackId:command.callbackId];
@@ -91,13 +52,13 @@ static FCMPlugin *fcmPluginInstance = nil;
     }];
 }
 
-- (void)setSharedEventDelegate:(CDVInvokedUrlCommand *)command {
+- (void)startJsEventBridge:(CDVInvokedUrlCommand *)command {
+    NSLog(@"start Js Event Bridge");
     jsEventBridgeCallbackId = command.callbackId;
-    DDLogDebug(@"setSharedEventDelegate() %@", jsEventBridgeCallbackId);
 }
 
 - (void)getToken:(CDVInvokedUrlCommand *)command {
-    DDLogDebug(@"getToken()");
+    NSLog(@"get Token");
     [self returnTokenOrRetry:^(NSString* fcmToken){
         CDVPluginResult* pluginResult = nil;
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:fcmToken];
@@ -112,7 +73,7 @@ static FCMPlugin *fcmPluginInstance = nil;
         return;
     }
     SEL thisMethodSelector = NSSelectorFromString(@"returnTokenOrRetry:");
-    DDLogDebug(@"FCMToken unavailable, it'll retry in one second");
+    NSLog(@"FCMToken unavailable, it'll retry in one second");
     NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:[self methodSignatureForSelector:thisMethodSelector]];
     [invocation setSelector:thisMethodSelector];
     [invocation setTarget:self];
@@ -121,11 +82,11 @@ static FCMPlugin *fcmPluginInstance = nil;
 }
 
 - (void)getAPNSToken:(CDVInvokedUrlCommand *)command  {
-    DDLogDebug(@"get APNS Token");
+    NSLog(@"get APNS Token");
     [self.commandDelegate runInBackground:^{
         CDVPluginResult* pluginResult = nil;
         NSString* apnsToken = [AppDelegate getAPNSToken];
-        DDLogDebug(@"get APNS Token value: %@", apnsToken);
+        NSLog(@"get APNS Token value: %@", apnsToken);
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:apnsToken];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     }];
@@ -133,7 +94,7 @@ static FCMPlugin *fcmPluginInstance = nil;
 
 - (void)clearAllNotifications:(CDVInvokedUrlCommand *)command {
   [self.commandDelegate runInBackground:^{
-    DDLogDebug(@"clear all notifications");
+    NSLog(@"clear all notifications");
     [[UIApplication sharedApplication] setApplicationIconBadgeNumber:1];
     [[UIApplication sharedApplication] setApplicationIconBadgeNumber:0];
     CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
@@ -143,7 +104,7 @@ static FCMPlugin *fcmPluginInstance = nil;
 
 - (void)subscribeToTopic:(CDVInvokedUrlCommand *)command {
     NSString* topic = [command.arguments objectAtIndex:0];
-    DDLogDebug(@"subscribe To Topic %@", topic);
+    NSLog(@"subscribe To Topic %@", topic);
     [self.commandDelegate runInBackground:^{
         if(topic != nil)[[FIRMessaging messaging] subscribeToTopic:topic];
         CDVPluginResult* pluginResult = nil;
@@ -154,7 +115,7 @@ static FCMPlugin *fcmPluginInstance = nil;
 
 - (void)unsubscribeFromTopic:(CDVInvokedUrlCommand *)command {
     NSString* topic = [command.arguments objectAtIndex:0];
-    DDLogDebug(@"unsubscribe From Topic %@", topic);
+    NSLog(@"unsubscribe From Topic %@", topic);
     [self.commandDelegate runInBackground:^{
         if(topic != nil)[[FIRMessaging messaging] unsubscribeFromTopic:topic];
         CDVPluginResult* pluginResult = nil;
@@ -167,18 +128,18 @@ static FCMPlugin *fcmPluginInstance = nil;
     [self.commandDelegate runInBackground:^{
         NSNumber* ios9SupportTimeout = [command argumentAtIndex:0 withDefault:[NSNumber numberWithFloat:10]];
         NSNumber* ios9SupportInterval = [command argumentAtIndex:1 withDefault:[NSNumber numberWithFloat:0.3]];
-        DDLogDebug(@"requestPushPermission { ios9SupportTimeout:%@ ios9SupportInterval:%@ }", ios9SupportTimeout, ios9SupportInterval);
+        NSLog(@"requestPushPermission { ios9SupportTimeout:%@ ios9SupportInterval:%@ }", ios9SupportTimeout, ios9SupportInterval);
         id objects[] = { ios9SupportTimeout, ios9SupportInterval };
         id keys[] = { @"ios9SupportTimeout", @"ios9SupportInterval" };
         NSDictionary* options = [NSDictionary dictionaryWithObjects:objects forKeys:keys count:2];
         [AppDelegate requestPushPermission:^(BOOL pushPermission, NSError* _Nullable error) {
             if(error != nil){
-                DDLogDebug(@"push permission request error: %@", error);
+                NSLog(@"push permission request error: %@", error);
                 __block CDVPluginResult *commandResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[error description]];
                 [self.commandDelegate sendPluginResult:commandResult callbackId:command.callbackId];
                 return;
             }
-            DDLogDebug(@"push permission request result: %@", pushPermission ? @"Yes" : @"No");
+            NSLog(@"push permission request result: %@", pushPermission ? @"Yes" : @"No");
             __block CDVPluginResult *commandResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:pushPermission];
             [self.commandDelegate sendPluginResult:commandResult callbackId:command.callbackId];
         } withOptions:options];
@@ -186,16 +147,27 @@ static FCMPlugin *fcmPluginInstance = nil;
 }
 
 - (void)getInitialPushPayload:(CDVInvokedUrlCommand *)command {
-    DDLogDebug(@"getInitialPushPayload");
+    NSLog(@"getInitialPushPayload");
     [self.commandDelegate runInBackground:^{
-        NSDictionary* jsonData = [AppDelegate getInitialPushPayload];
-        if (jsonData == nil) {
+        NSData* dataPayload = [AppDelegate getInitialPushPayload];
+        if (dataPayload == nil) {
             CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:nil];
             [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
             return;
         }
-        DDLogDebug(@"getInitialPushPayload value: %@", [FCMPlugin toJsonString:jsonData]);
-        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:jsonData];
+        NSString *strUTF8 = [[NSString alloc] initWithData:dataPayload encoding:NSUTF8StringEncoding];
+        NSData *dataPayloadUTF8 = [strUTF8 dataUsingEncoding:NSUTF8StringEncoding];
+        NSError* error = nil;
+        NSDictionary *payloadDictionary = [NSJSONSerialization JSONObjectWithData:dataPayloadUTF8 options:0 error:&error];
+        if (error) {
+            NSString* errorMessage = [NSString stringWithFormat:@"%@ => '%@'", [error localizedDescription], strUTF8];
+            NSLog(@"getInitialPushPayload error: %@", errorMessage);
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_JSON_EXCEPTION messageAsString:errorMessage];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            return;
+        }
+        NSLog(@"getInitialPushPayload value: %@", payloadDictionary);
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:payloadDictionary];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     }];
 }
@@ -205,10 +177,10 @@ static FCMPlugin *fcmPluginInstance = nil;
         [AppDelegate deleteInstanceId:^(NSError *error) {
             __block CDVPluginResult *commandResult;
             if(error == nil) {
-                DDLogDebug(@"InstanceID deleted");
+                NSLog(@"InstanceID deleted");
                 commandResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
             } else {
-                DDLogDebug(@"InstanceID deletion error: %@", error);
+                NSLog(@"InstanceID deletion error: %@", error);
                 commandResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[error description]];
             }
             [self.commandDelegate sendPluginResult:commandResult callbackId:command.callbackId];
@@ -216,42 +188,41 @@ static FCMPlugin *fcmPluginInstance = nil;
     }];
 }
 
-- (void)notifyOfMessage:(NSDictionary *)payload {
-    DDLogDebug(@"notifyOfMessage payload: %@", [FCMPlugin toJsonString:payload]);
-    [self dispatchJSEvent:EVENT_TYPE_NOTIFICATION withData:payload];
+- (void)notifyOfMessage:(NSData *)payload {
+    NSLog(@"notifyOfMessage payload: %@", payload);
+    NSString* JSONString = [[NSString alloc] initWithBytes:[payload bytes] length:[payload length] encoding:NSUTF8StringEncoding];
+    [self dispatchJSEvent:notificationEventName withData:JSONString];
 }
 
 - (void)notifyFCMTokenRefresh:(NSString *)token {
-    DDLogDebug(@"notifyFCMTokenRefresh token: %@", token);
-    NSMutableDictionary* eventData = [[NSMutableDictionary alloc] init];
-    [eventData setValue:token forKey:@"token"];
-    [self dispatchJSEvent:EVENT_TYPE_TOKEN_REFRESH withData:eventData];
+    NSLog(@"notifyFCMTokenRefresh token: %@", token);
+    NSString* jsToken = [NSString stringWithFormat:@"\"%@\"", token];
+    [self dispatchJSEvent:tokenRefreshCallback withData:jsToken];
 }
 
-- (void)dispatchJSEvent:(NSString *)eventName withData:(NSDictionary *)jsData {
+- (void)dispatchJSEvent:(NSString *)eventName withData:(NSString *)jsData {
     if(jsEventBridgeCallbackId == nil) {
-        DDLogDebug(@"dispatchJSEvent: Unable to send event due to unreachable bridge context: %@ with %@", eventName, [FCMPlugin toJsonString:jsData]);
+        NSLog(@"dispatchJSEvent: Unable to send event due to unreachable bridge context: %@ with %@", eventName, jsData);
         return;
     }
-    DDLogDebug(@"dispatchJSEvent: %@ with %@", eventName, [FCMPlugin toJsonString:jsData]);
-    NSMutableDictionary* eventPayload = [[NSMutableDictionary alloc] init];
-    [eventPayload setValue:eventName forKey:@"type"];
-    [eventPayload setValue:jsData forKey:@"data"];
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:eventPayload];
+    NSLog(@"dispatchJSEvent: %@ with %@", eventName, jsData);
+    NSString* eventDataTemplate = @"[\"%@\",%@]";
+    NSString* eventData = [NSString stringWithFormat:eventDataTemplate, eventName, jsData];
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:eventData];
     [pluginResult setKeepCallbackAsBool:TRUE];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:jsEventBridgeCallbackId];
 }
 
 - (void)appEnterBackground {
-    DDLogDebug(@"Set state background");
+    NSLog(@"Set state background");
     appInForeground = NO;
 }
 
 - (void)appEnterForeground {
-    DDLogDebug(@"Set state foreground");
-    NSDictionary* lastPush = [AppDelegate getLastPush];
+    NSLog(@"Set state foreground");
+    NSData* lastPush = [AppDelegate getLastPush];
     if (lastPush != nil) {
-        [self notifyOfMessage:lastPush];
+        [FCMPlugin.fcmPlugin notifyOfMessage:lastPush];
     }
     appInForeground = YES;
 }
