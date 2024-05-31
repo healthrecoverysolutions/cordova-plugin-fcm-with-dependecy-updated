@@ -4,13 +4,13 @@
 
 @interface AppDelegate (FCMPlugin)
 
-+ (NSData*)getLastPush;
-+ (NSData*)getInitialPushPayload;
++ (NSDictionary*)getLastPush;
++ (NSDictionary*)getInitialPushPayload;
 + (NSString*)getFCMToken;
 + (NSString*)getAPNSToken;
 + (void)deleteInstanceId:(void (^)(NSError *error))handler;
-+ (void)setLastPush:(NSData*)push;
-+ (void)setInitialPushPayload:(NSData*)payload;
++ (void)setLastPush:(NSDictionary*)push;
++ (void)setInitialPushPayload:(NSDictionary*)payload;
 + (void)requestPushPermission:(void (^)(BOOL yesOrNo, NSError* error))block withOptions:(NSDictionary*)options;
 + (void)hasPushPermission:(void (^)(NSNumber* yesNoOrNil))block;
 

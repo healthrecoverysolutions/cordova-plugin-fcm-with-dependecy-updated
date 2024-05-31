@@ -4,6 +4,9 @@
 #import "FCMNotificationCenterDelegate.h"
 #import <objc/runtime.h>
 #import <Foundation/Foundation.h>
+#import <CocoaLumberjack/CocoaLumberjack.h>
+
+#define ddLogLevel DDLogLevelAll
 
 @import UserNotifications;
 @import Firebase;
@@ -16,8 +19,8 @@
 
 @implementation AppDelegate (MCPlugin)
 
-static NSData *lastPush;
-static NSData *initialPushPayload;
+static NSDictionary *lastPush;
+static NSDictionary *initialPushPayload;
 static NSString *fcmToken;
 static NSString *apnsToken;
 NSString *const kGCMMessageIDKey = @"gcm.message_id";
@@ -33,7 +36,7 @@ FCMNotificationCenterDelegate *notificationCenterDelegate;
 - (BOOL)application:(UIApplication *)application customDidFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     [self application:application customDidFinishLaunchingWithOptions:launchOptions];
 
-    NSLog(@"DidFinishLaunchingWithOptions");
+    DDLogDebug(@"DidFinishLaunchingWithOptions");
     if ([UNUserNotificationCenter class] != nil) {
         // For iOS 10 display notification (sent via APNS)
         notificationCenterDelegate = [NSClassFromString(@"FCMNotificationCenterDelegate") alloc];
@@ -68,7 +71,7 @@ FCMNotificationCenterDelegate *notificationCenterDelegate;
             block(YES, error);
             return;
         }
-        NSLog(@"User Notification permission denied: %@", error.localizedDescription);
+        DDLogDebug(@"User Notification permission denied: %@", error.localizedDescription);
         block(NO, error);
     }];
 }
@@ -85,7 +88,7 @@ FCMNotificationCenterDelegate *notificationCenterDelegate;
             stringByReplacingOccurrencesOfString:@" " withString:@""];
     }
     apnsToken = deviceToken;
-    NSLog(@"Device APNS Token: %@", deviceToken);
+    DDLogDebug(@"Device APNS Token: %@", deviceToken);
     if (@available(iOS 10, *)) {
         return;
     }
@@ -93,7 +96,7 @@ FCMNotificationCenterDelegate *notificationCenterDelegate;
 }
 
 - (void)application:(UIApplication *)application didFailToRegisterForRemoteNotifications:(NSError *)error {
-    NSLog(@"Failed to register for remote notifications: %@", error);
+    DDLogDebug(@"Failed to register for remote notifications: %@", error);
     if (@available(iOS 10, *)) {
         return;
     }
@@ -116,32 +119,28 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
 
     if (@available(iOS 10, *)) {
         // Print message ID.
-        NSLog(@"Message ID: %@", userInfo[@"gcm.message_id"]);
+        DDLogDebug(@"Message ID: %@", userInfo[@"gcm.message_id"]);
 
         // Pring full message.
-        NSLog(@"%@", userInfo);
+        DDLogDebug(@"%@", userInfo);
 
         // If the app is in the background, keep it for later, in case it's not tapped.
         if(application.applicationState == UIApplicationStateBackground) {
-            NSError *error;
-            NSDictionary *userInfoMutable = [userInfo mutableCopy];
-            [userInfoMutable setValue:@(NO) forKey:@"wasTapped"];
-            NSLog(@"app active");
-            lastPush = [NSJSONSerialization dataWithJSONObject:userInfoMutable options:0 error:&error];
+            NSMutableDictionary *jsonData = [userInfo mutableCopy];
+            [jsonData setValue:@(NO) forKey:@"wasTapped"];
+            DDLogDebug(@"app active");
+            lastPush = jsonData;
             [AppDelegate setInitialPushPayload:lastPush];
         } else if(application.applicationState == UIApplicationStateInactive) {
-            NSError *error;
-            NSDictionary *userInfoMutable = [userInfo mutableCopy];
-            [userInfoMutable setValue:@(YES) forKey:@"wasTapped"];
-            NSLog(@"app opened by user tap");
-            lastPush = [NSJSONSerialization dataWithJSONObject:userInfoMutable options:0 error:&error];
+            NSMutableDictionary *jsonData = [userInfo mutableCopy];
+            [jsonData setValue:@(YES) forKey:@"wasTapped"];
+            DDLogDebug(@"app opened by user tap");
+            lastPush = jsonData;
             [AppDelegate setInitialPushPayload:lastPush];
         } else if(application.applicationState == UIApplicationStateActive) {
-            NSError *error;
-            NSDictionary *userInfoMutable = [userInfo mutableCopy];
-            NSLog(@"app active");
-            NSData *payload = [NSJSONSerialization dataWithJSONObject:userInfoMutable options:0 error:&error];
-            [FCMPlugin.fcmPlugin notifyOfMessage:payload];
+            NSMutableDictionary *jsonData = [userInfo mutableCopy];
+            DDLogDebug(@"app active");
+            [FCMPlugin dispatchNotification:jsonData];
         }
 
         completionHandler(UIBackgroundFetchResultNoData);
@@ -153,17 +152,17 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
 // [END message_handling]
 
 - (void)messaging:(nonnull FIRMessaging *)messaging didReceiveRegistrationToken:(NSString *)deviceToken {
-    NSLog(@"Device FCM Token: %@", deviceToken);
+    DDLogDebug(@"Device FCM Token: %@", deviceToken);
     if(deviceToken == nil) {
         fcmToken = nil;
-        [FCMPlugin.fcmPlugin notifyFCMTokenRefresh:nil];
+        [FCMPlugin dispatchTokenRefresh:nil];
         return;
     }
     // Notify about received token.
     NSDictionary *dataDict = [NSDictionary dictionaryWithObject:deviceToken forKey:@"token"];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"FCMToken" object:nil userInfo:dataDict];
     fcmToken = deviceToken;
-    [FCMPlugin.fcmPlugin notifyFCMTokenRefresh:deviceToken];
+    [FCMPlugin dispatchTokenRefresh:deviceToken];
     [self connectToFcm];
 }
 
@@ -179,36 +178,34 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
 // [END connect_to_fcm]
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
-    NSLog(@"app become active");
-    [FCMPlugin.fcmPlugin appEnterForeground];
+    DDLogDebug(@"app become active");
     [self connectToFcm];
 }
 
 // [BEGIN disconnect_from_fcm]
 - (void)applicationDidEnterBackground:(UIApplication *)application {
-    NSLog(@"app entered background");
-    [FCMPlugin.fcmPlugin appEnterBackground];
-    NSLog(@"Disconnected from FCM");
+    DDLogDebug(@"app entered background");
+    DDLogDebug(@"Disconnected from FCM");
 }
 // [END disconnect_from_fcm]
 
-+ (void)setLastPush:(NSData*)push {
++ (void)setLastPush:(NSDictionary*)push {
     lastPush = push;
 }
 
-+ (void)setInitialPushPayload:(NSData*)payload {
++ (void)setInitialPushPayload:(NSDictionary*)payload {
     if(initialPushPayload == nil) {
         initialPushPayload = payload;
     }
 }
 
-+ (NSData*)getLastPush {
-    NSData* returnValue = lastPush;
++ (NSDictionary*)getLastPush {
+    NSDictionary* returnValue = lastPush;
     lastPush = nil;
     return returnValue;
 }
 
-+ (NSData*)getInitialPushPayload {
++ (NSDictionary*)getInitialPushPayload {
     return initialPushPayload;
 }
 

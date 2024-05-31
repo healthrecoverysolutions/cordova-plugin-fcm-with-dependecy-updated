@@ -3,6 +3,9 @@
 #import "FCMPlugin.h"
 #import "FCMPluginIOS9Support.h"
 #import "AppDelegate+FCMPlugin.h"
+#import <CocoaLumberjack/CocoaLumberjack.h>
+
+#define ddLogLevel DDLogLevelAll
 
 @interface FCMPluginIOS9Support () {}
 @end
@@ -58,7 +61,7 @@ static void (^requestPushPermissionCallback)(BOOL yesOrNo, NSError* _Nullable er
         }
         SEL thisMethodSelector = NSSelectorFromString(@"waitForUserDecision:withInterval:");
         if(![self respondsToSelector:thisMethodSelector]) {
-            NSLog(@"waitForUserDecision:withInterval: selector not found in FCMPluginIOS9Support");
+            DDLogDebug(@"waitForUserDecision:withInterval: selector not found in FCMPluginIOS9Support");
             return;
         }
         float remainingTimeout = timeout - interval;
@@ -110,14 +113,12 @@ static void (^requestPushPermissionCallback)(BOOL yesOrNo, NSError* _Nullable er
 #pragma clang diagnostic pop
 
 + (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
-    NSLog(@"Message ID: %@", userInfo[@"gcm.message_id"]);
-    NSError *error;
-    NSDictionary *userInfoMutable = [userInfo mutableCopy];
+    DDLogDebug(@"Message ID: %@", userInfo[@"gcm.message_id"]);
+    NSMutableDictionary *jsonData = [userInfo mutableCopy];
     if (application.applicationState != UIApplicationStateActive) {
-        NSLog(@"New method with push callback: %@", userInfo);
-        [userInfoMutable setValue:@(YES) forKey:@"wasTapped"];
-        NSData *jsonData = [NSJSONSerialization dataWithJSONObject:userInfoMutable options:0 error:&error];
-        NSLog(@"APP WAS CLOSED DURING PUSH RECEPTION Saved data: %@", jsonData);
+        DDLogDebug(@"New method with push callback: %@", userInfo);
+        [jsonData setValue:@(YES) forKey:@"wasTapped"];
+        DDLogDebug(@"APP WAS CLOSED DURING PUSH RECEPTION Saved data: %@", jsonData);
         [AppDelegate setInitialPushPayload:jsonData];
         [AppDelegate setLastPush:jsonData];
     }
@@ -132,10 +133,9 @@ static void (^requestPushPermissionCallback)(BOOL yesOrNo, NSError* _Nullable er
 }
 
 + (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
-    NSLog(@"Message ID: %@", userInfo[@"gcm.message_id"]);
-    NSLog(@"%@", userInfo);
-    NSError *error;
-    NSDictionary *userInfoMutable = [userInfo mutableCopy];
+    DDLogDebug(@"Message ID: %@", userInfo[@"gcm.message_id"]);
+    DDLogDebug(@"%@", userInfo);
+    NSMutableDictionary *jsonData = [userInfo mutableCopy];
 
     // Has user tapped the notificaiton?
     // UIApplicationStateActive   - app is currently active
@@ -143,12 +143,9 @@ static void (^requestPushPermissionCallback)(BOOL yesOrNo, NSError* _Nullable er
     //                              foreground (user taps notification)
     if (application.applicationState == UIApplicationStateActive
         || application.applicationState == UIApplicationStateInactive) {
-        [userInfoMutable setValue:@(NO) forKey:@"wasTapped"];
-        NSLog(@"app active");
-        NSData *jsonData = [NSJSONSerialization dataWithJSONObject:userInfoMutable
-                                                           options:0
-                                                             error:&error];
-        [FCMPlugin.fcmPlugin notifyOfMessage:jsonData];
+        [jsonData setValue:@(NO) forKey:@"wasTapped"];
+        DDLogDebug(@"app active");
+        [FCMPlugin dispatchNotification:jsonData];
     }
     completionHandler(UIBackgroundFetchResultNoData);
 }
