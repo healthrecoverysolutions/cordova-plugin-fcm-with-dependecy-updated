@@ -1,0 +1,12 @@
+{
+	"extends": "./tsconfig.common.json",
+	"compilerOptions": {
+		"target": "ES5",
+		"module": "CommonJS",
+		"outDir": "www/",
+		"declaration": false
+	},
+	"include": [
+        "src/ts/cordova-plugin-fcm-with-dependecy-updated.ts"
+    ]
+}

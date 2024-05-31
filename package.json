@@ -1,51 +1,46 @@
 {
-    "version": "7.8.3",
-    "name": "cordova-plugin-fcm-with-dependecy-updated",
-    "cordova_name": "Cordova FCM Push Plugin",
-    "description": "Google Firebase Cloud Messaging Cordova Push Plugin fork with dependecy updated",
-    "license": "MIT",
-    "main": "www/FCMPlugin.js",
-    "typings": "typings/index.d.ts",
-    "repo": "https://github.com/andrehtissot/cordova-plugin-fcm-with-dependecy-updated",
-    "issue": "https://github.com/andrehtissot/cordova-plugin-fcm-with-dependecy-updated/issues",
-    "author": "André Augusto Tissot",
-    "scripts": {
-        "version": "node ./scripts/version-sync.js",
-        "build": "npm run build:www;npm run build:ionic",
-        "build:www": "cd ./src/www;npm run build",
-        "build:ionic": "cd ./src/ionic;npm run build",
-        "prettier-src": "find ./src/ -name '*.js' -or -name '*.ts' -or -name '*.tsx' -or -name '*.scss' | grep -v node_modules | xargs npx prettier --write",
-        "prettier-scripts": "find ./scripts -name '*.js' | xargs npx prettier --write",
-        "prettier": "npm run prettier-src;npm run prettier-scripts",
-        "tslint": "npx tslint -p ./src/www --fix;npx tslint -p ./src/ionic --fix"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/andrehtissot/cordova-plugin-fcm-with-dependecy-updated"
-    },
-    "keywords": [
-        "ecosystem:cordova",
-        "cordova-android",
-        "cordova-ios",
-        "notifications",
-        "push",
-        "firebase",
-        "fcm",
-        "ios",
-        "android",
-        "cordova"
-    ],
-    "platforms": [
-        "android",
-        "ios"
-    ],
-    "englishdoc": "",
-    "devDependencies": {
-        "prettier": "^2.2.1",
-        "tslint": "^6.1.3",
-        "tslint-microsoft-contrib": "^6.2.0"
-    },
-    "dependencies": {
-        "typescript": "^4.1.3"
-    }
+  "version": "7.8.3",
+  "name": "cordova-plugin-fcm-with-dependecy-updated",
+  "cordova_name": "Cordova FCM Push Plugin",
+  "description": "Google Firebase Cloud Messaging Cordova Push Plugin fork with dependecy updated",
+  "main": "./lib/index.js",
+  "module": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "scripts": {
+    "version": "node ./scripts/version-sync.js",
+    "build:clean": "rm -rf ./www/* ./lib/*",
+    "build:cordova": "tsc -p tsconfig.cordova.json",
+    "build:lib": "tsc -p tsconfig.lib.json",
+    "build": "run-s build:clean build:cordova build:lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrehtissot/cordova-plugin-fcm-with-dependecy-updated.git"
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android",
+    "cordova-ios",
+    "notifications",
+    "push",
+    "firebase",
+    "fcm",
+    "ios",
+    "android",
+    "cordova"
+  ],
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "devDependencies": {
+    "@types/cordova": "11.0.3",
+    "@types/node": "20.12.12",
+    "npm-run-all": "4.1.5",
+    "typescript": "5.4.5"
+  },
+  "bugs": {
+    "url": "https://github.com/andrehtissot/cordova-plugin-fcm-with-dependecy-updated/issues"
+  },
+  "homepage": "https://github.com/andrehtissot/cordova-plugin-fcm-with-dependecy-updated#readme"
 }
