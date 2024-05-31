@@ -23,8 +23,8 @@
 	<license>MIT</license>
 	<keywords>notifications, push, firebase, fcm, ios, android, cordova, plugin</keywords>
 
-	<js-module src="www/cordova-plugin-fcm-with-dependecy-updated.js" name="FCMPlugin">
-		<clobbers target="FCMPlugin" />
+	<js-module src="www/FCMPlugin.js" name="FCMPlugin">
+		<clobbers target="FCM" />
 	</js-module>
 
 	<engines>
@@ -43,14 +43,14 @@
 		<preference name="ANDROID_INHERIT_GOOGLE_SERVICES" default="false" />
 
 		<config-file target="AndroidManifest.xml" parent="/manifest/application">
-			<activity android:name="com.hrs.firebase.messaging.FCMPluginActivity" android:exported="true" android:launchMode="singleTop">
+			<activity android:name="com.gae.scaffolder.plugin.FCMPluginActivity" android:exported="true" android:launchMode="singleTop">
 				<intent-filter>
 					<action android:name="FCM_PLUGIN_ACTIVITY" />
 					<category android:name="android.intent.category.DEFAULT" />
 				</intent-filter>
 			</activity>
 			<service 
-				android:name="com.hrs.firebase.messaging.MyFirebaseMessagingService" 
+				android:name="com.gae.scaffolder.plugin.MyFirebaseMessagingService" 
 				android:exported="false" 
 				android:stopWithTask="false">
 				<intent-filter>
@@ -61,7 +61,7 @@
 		</config-file>
 		<config-file target="res/xml/config.xml" parent="/*">
 			<feature name="FCMPlugin">
-				<param name="android-package" value="com.hrs.firebase.messaging.FCMPlugin"/>
+				<param name="android-package" value="com.gae.scaffolder.plugin.FCMPlugin"/>
 				<param name="onload" value="true" />
 			</feature>
 		</config-file>
@@ -73,12 +73,12 @@
 		<framework src="com.jakewharton.timber:timber:5.0.1" />
 		<framework src="src/android/FCMPlugin.gradle" custom="true" type="gradleReference"/>
 
-		<source-file src="src/android/com/hrs/firebase/messaging/FCMPlugin.java" target-dir="src/com/hrs/firebase/messaging" />
-		<source-file src="src/android/com/hrs/firebase/messaging/FCMPluginChannelCreator.java" target-dir="src/com/hrs/firebase/messaging" />
-		<source-file src="src/android/com/hrs/firebase/messaging/MyFirebaseMessagingService.java" target-dir="src/com/hrs/firebase/messaging" />
-		<source-file src="src/android/com/hrs/firebase/messaging/FCMPluginActivity.java" target-dir="src/com/hrs/firebase/messaging" />
-		<source-file src="src/android/com/hrs/firebase/messaging/interfaces/OnFinishedListener.java" target-dir="src/com/hrs/firebase/messaging/interfaces" />
-		<source-file src="src/android/com/hrs/firebase/messaging/interfaces/TokenListeners.java" target-dir="src/com/hrs/firebase/messaging/interfaces" />
+		<source-file src="src/android/com/gae/scaffolder/plugin/FCMPlugin.java" target-dir="src/com/gae/scaffolder/plugin" />
+		<source-file src="src/android/com/gae/scaffolder/plugin/FCMPluginChannelCreator.java" target-dir="src/com/gae/scaffolder/plugin" />
+		<source-file src="src/android/com/gae/scaffolder/plugin/MyFirebaseMessagingService.java" target-dir="src/com/gae/scaffolder/plugin" />
+		<source-file src="src/android/com/gae/scaffolder/plugin/FCMPluginActivity.java" target-dir="src/com/gae/scaffolder/plugin" />
+		<source-file src="src/android/com/gae/scaffolder/plugin/interfaces/OnFinishedListener.java" target-dir="src/com/gae/scaffolder/plugin/interfaces" />
+		<source-file src="src/android/com/gae/scaffolder/plugin/interfaces/TokenListeners.java" target-dir="src/com/gae/scaffolder/plugin/interfaces" />
 
 		<hook src="scripts/copy_google_service_files.js" type="after_prepare" />
 		<hook src="scripts/copy_google_service_files.js" type="after_plugin_add" />
@@ -128,11 +128,12 @@
 			<config>
             	<source url="https://cdn.cocoapods.org/"/>
 			</config>
-			<pods use-frameworks="true">
+			<pods>
 				<pod name="Firebase/Messaging" spec="$IOS_FIREBASE_MESSAGING_VERSION"/>
 				<pod name="Firebase/Analytics" spec="$IOS_FIREBASE_ANALYTICS_VERSION"/>
-				<pod name="CocoaLumberjack/Swift" spec="~> 3.8" />
 			</pods>
 		</podspec>
 	</platform>
+
+	<hook src="scripts/install_ionic_dependencies.bat" type="after_plugin_install" />
 </plugin>
