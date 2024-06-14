@@ -254,6 +254,19 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
 
 // Added deleteInstanceId method in AppDelegate+FCMPlugin.m as it is being consumed in logout.
 + (void)deleteInstanceId:(void (^)(NSError *error))handler {
+    if ([self getAPNSToken] == nil) {
+        /* Fixed DEV-16505 Re-retrieve the APNS token if it's not available, as it will be needed when the FCM token is refreshed following the deletion of the FCM current instance. */
+        UNAuthorizationOptions authOptions = UNAuthorizationOptionAlert | UNAuthorizationOptionSound | UNAuthorizationOptionBadge;
+        [[UNUserNotificationCenter currentNotificationCenter] requestAuthorizationWithOptions:authOptions completionHandler:^(BOOL granted, NSError* _Nullable error) {
+            if (granted) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [[UIApplication sharedApplication] registerForRemoteNotifications];
+                });
+            } else {
+                DDLogDebug(@"User Notification permission denied: %@", error.localizedDescription);
+            }
+        }];
+    }
     //Replaced deleteIDWithHandler with deleteDataWithCompletion to delete FCM token.
     [[FIRMessaging messaging] deleteDataWithCompletion:handler];
     //Added deleteWithCompletion method to delete FCM instance on logout.
