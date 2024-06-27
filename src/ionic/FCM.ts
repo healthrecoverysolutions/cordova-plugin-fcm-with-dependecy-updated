@@ -3,6 +3,7 @@ import { INotificationPayload } from '../../typings/INotificationPayload'
 import { FCMPlugin } from '../www/FCMPlugin'
 import { IRequestPushPermissionOptions } from '../../typings/IRequestPushPermissionOptions'
 import { IChannelConfiguration } from '../../typings/IChannelConfiguration'
+import { FCMLogEventCallback } from '../../typings/FCMLogger'
 
 declare namespace window {
     export let FCM: FCMPlugin
@@ -10,6 +11,11 @@ declare namespace window {
 
 /** @copyFrom typings/FCMPlugin.d.ts FCMPlugin */
 export class FCMPluginOnIonic {
+    /** @copyFrom typings/FCMPlugin.d.ts FCMPlugin onLog */
+    public onLog(callback: FCMLogEventCallback): void {
+        window.FCM.onLog(callback as any);
+    }
+
     /** @copyFrom typings/FCMPlugin.d.ts FCMPlugin clearAllNotifications */
     public clearAllNotifications(): Promise<void> {
         return window.FCM.clearAllNotifications()

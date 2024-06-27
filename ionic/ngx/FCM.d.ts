@@ -2,7 +2,7 @@ import { Observable } from 'rxjs';
 import { IChannelConfiguration } from '../../typings/IChannelConfiguration';
 import { INotificationPayload } from '../../typings/INotificationPayload';
 import { IRequestPushPermissionOptions } from '../../typings/IRequestPushPermissionOptions';
-import {AccountInfo} from '../../typings/accountInfo';
+import { FCMLogEventCallback } from '../../typings/FCMLogger';
 /**
  * @name FCM
  * @description
@@ -25,6 +25,10 @@ export declare class FCM {
     static getPluginRef: () => string;
     static getPluginInstallName: () => string;
     static getSupportedPlatforms: () => string[];
+    /**
+     * Register a callback to handle logs produced by this wrapper object.
+     */
+    onLog(callback: FCMLogEventCallback): void;
     /**
      * Removes existing push notifications from the notifications center
      *
@@ -117,7 +121,12 @@ export declare class FCM {
      * @returns {Promise<void>} Async call to native implementation
      */
     unsubscribeFromTopic(topic: string): Promise<void>;
-
-    initDifferentAccount(accountInfo: AccountInfo): Promise<void>;
+    /**
+     * Unsubscribes you from a [topic](https://firebase.google.com/docs/notifications/android/console-topics)
+     *
+     * @param {string} topic Topic to be unsubscribed from
+     *
+     * @returns {Promise<void>} Async call to native implementation
+     */
+    initDifferentAccount(accountInfo: any): Promise<void>;
 }
-

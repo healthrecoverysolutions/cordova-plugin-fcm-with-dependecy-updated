@@ -17,7 +17,7 @@
   specific language governing permissions and limitations
   under the License.
 -->
-<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-fcm-with-dependecy-updated" version="7.8.0">
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-fcm-with-dependecy-updated" version="7.8.3">
 	<name>Cordova FCM Push Plugin</name>
 	<description>Google Firebase Cloud Messaging Cordova Push Plugin fork with dependecy updated</description>
 	<license>MIT</license>
@@ -40,6 +40,7 @@
 		<preference name="ANDROID_FIREBASE_BOM_VERSION" default="29.0.1" />
 		<preference name="ANDROID_GOOGLE_SERVICES_VERSION" default="4.3.4" />
 		<preference name="ANDROID_GRADLE_TOOLS_VERSION" default="4.1.0" />
+		<preference name="ANDROID_INHERIT_GOOGLE_SERVICES" default="false" />
 
 		<config-file target="AndroidManifest.xml" parent="/manifest/application">
 			<activity android:name="com.gae.scaffolder.plugin.FCMPluginActivity" android:exported="true" android:launchMode="singleTop">
@@ -69,6 +70,7 @@
 				<preference name="AndroidXEnabled" value="true" />
 			</platform>
 		</config-file>
+		<framework src="com.jakewharton.timber:timber:5.0.1" />
 		<framework src="src/android/FCMPlugin.gradle" custom="true" type="gradleReference"/>
 
 		<source-file src="src/android/com/gae/scaffolder/plugin/FCMPlugin.java" target-dir="src/com/gae/scaffolder/plugin" />
@@ -77,11 +79,16 @@
 		<source-file src="src/android/com/gae/scaffolder/plugin/FCMPluginActivity.java" target-dir="src/com/gae/scaffolder/plugin" />
 		<source-file src="src/android/com/gae/scaffolder/plugin/interfaces/OnFinishedListener.java" target-dir="src/com/gae/scaffolder/plugin/interfaces" />
 		<source-file src="src/android/com/gae/scaffolder/plugin/interfaces/TokenListeners.java" target-dir="src/com/gae/scaffolder/plugin/interfaces" />
+
+		<hook src="scripts/copy_google_service_files.js" type="after_prepare" />
+		<hook src="scripts/copy_google_service_files.js" type="after_plugin_add" />
+		<hook src="scripts/fix-android-gradle-build.js" type="after_plugin_add" />
 	</platform>
 
 	<!-- IOS CONFIGURATION -->
 	<platform name="ios">
-		<preference name="IOS_FIREBASE_MESSAGING_VERSION" default="~> 7.4.0" />
+		<preference name="IOS_FIREBASE_MESSAGING_VERSION" default="7.4.0" />
+		<preference name="IOS_FIREBASE_ANALYTICS_VERSION" default="7.4.0" />
 		<config-file target="config.xml" parent="/*">
 			<feature name="FCMPlugin">
 				<param name="ios-package" value="FCMPlugin"/>
@@ -104,8 +111,6 @@
 			<false/>
 		</config-file>
 
-		<resource-file src="src/ios/Assets/GoogleService-Info.plist" target="Resources/GoogleService-Info.plist" />
-
 		<header-file src="src/ios/FCMPlugin.h" />
 		<source-file src="src/ios/FCMPlugin.m" />
 
@@ -121,16 +126,14 @@
 		<!-- FIREBASE COCOAPODS-->
 		<podspec>
 			<config>
-                <source url="https://github.com/CocoaPods/Specs.git"/>
+            	<source url="https://cdn.cocoapods.org/"/>
 			</config>
 			<pods>
 				<pod name="Firebase/Messaging" spec="$IOS_FIREBASE_MESSAGING_VERSION"/>
+				<pod name="Firebase/Analytics" spec="$IOS_FIREBASE_ANALYTICS_VERSION"/>
 			</pods>
 		</podspec>
 	</platform>
 
-	<!-- COPY FCM CONFIG FILES TO PLATFORM BEFORE COMPILING -->
-	<hook src="scripts/copy_google_service_files.js" type="after_prepare" />
-	<hook src="scripts/copy_google_service_files.js" type="after_plugin_add" />
 	<hook src="scripts/install_ionic_dependencies.bat" type="after_plugin_install" />
 </plugin>

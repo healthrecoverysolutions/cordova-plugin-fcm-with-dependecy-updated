@@ -22,6 +22,9 @@ import { Plugin } from '@ionic-native/core'
 import { Subject } from 'rxjs'
 
 function FCM() {}
+FCM.prototype.onLog = function (callback) {
+    window.FCM.onLog(callback)
+}
 FCM.prototype.clearAllNotifications = function () {
     return window.FCM.clearAllNotifications()
 }

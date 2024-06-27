@@ -3,7 +3,6 @@ package com.gae.scaffolder.plugin;
 import androidx.core.app.NotificationManagerCompat;
 import android.app.NotificationManager;
 import android.content.Context;
-import android.util.Log;
 
 import com.gae.scaffolder.plugin.interfaces.*;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -24,11 +23,12 @@ import org.json.JSONObject;
 
 import java.util.Map;
 
+import timber.log.Timber;
+
 public class FCMPlugin extends CordovaPlugin {
     public static String notificationEventName = "notification";
     public static String tokenRefreshEventName = "tokenRefresh";
     public static Map<String, Object> initialPushPayload;
-    public static final String TAG = "FCMPlugin";
     private static FCMPlugin instance;
     protected Context context;
     protected static CallbackContext jsEventBridgeCallbackContext;
@@ -69,14 +69,14 @@ public class FCMPlugin extends CordovaPlugin {
 
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
-        Log.d(TAG, "==> FCMPlugin initialize");
+        Timber.d("==> FCMPlugin initialize");
 
         FirebaseMessaging.getInstance().subscribeToTopic("android");
         FirebaseMessaging.getInstance().subscribeToTopic("all");
     }
 
     public boolean execute(final String action, final JSONArray args, final CallbackContext callbackContext) throws JSONException {
-        Log.d(TAG, "==> FCMPlugin execute: " + action);
+        Timber.d("==> FCMPlugin execute: " + action);
 
         try {
             if (action.equals("ready")) {
@@ -168,7 +168,7 @@ public class FCMPlugin extends CordovaPlugin {
                 return false;
             }
         } catch (Exception e) {
-            Log.d(TAG, "ERROR: onPluginAction: " + e.getMessage());
+            Timber.d("ERROR: onPluginAction: " + e.getMessage());
             callbackContext.error(e.getMessage());
             return false;
         }
@@ -178,16 +178,16 @@ public class FCMPlugin extends CordovaPlugin {
 
     public void getInitialPushPayload(CallbackContext callback) {
         if(initialPushPayload == null) {
-            Log.d(TAG, "getInitialPushPayload: null");
+            Timber.d("getInitialPushPayload: null");
             callback.success((String) null);
             return;
         }
-        Log.d(TAG, "getInitialPushPayload");
+        Timber.d("getInitialPushPayload");
         try {
             JSONObject jo = new JSONObject();
             for (String key : initialPushPayload.keySet()) {
                 jo.put(key, initialPushPayload.get(key));
-                Log.d(TAG, "\tinitialPushPayload: " + key + " => " + initialPushPayload.get(key));
+                Timber.d("\tinitialPushPayload: " + key + " => " + initialPushPayload.get(key));
             }
             callback.success(jo);
         } catch(Exception error) {
@@ -195,7 +195,7 @@ public class FCMPlugin extends CordovaPlugin {
                 callback.error(exceptionToJson(error));
             }
             catch (JSONException jsonErr) {
-                Log.e(TAG, "Error when parsing json", jsonErr);
+                Timber.e(jsonErr, "Error when parsing json");
             }
         }
     }
@@ -206,12 +206,12 @@ public class FCMPlugin extends CordovaPlugin {
                 @Override
                 public void onComplete(Task<String> task) {
                     if (!task.isSuccessful()) {
-                        Log.w(TAG, "getInstanceId failed", task.getException());
+                        Timber.w("getInstanceId failed", task.getException());
                         try {
                             callback.error(exceptionToJson(task.getException()));
                         }
                         catch (JSONException jsonErr) {
-                            Log.e(TAG, "Error when parsing json", jsonErr);
+                            Timber.e(jsonErr, "Error when parsing json");
                         }
                         return;
                     }
@@ -219,7 +219,7 @@ public class FCMPlugin extends CordovaPlugin {
                     // Get new Instance ID token
                     String newToken = task.getResult();
 
-                    Log.i(TAG, "\tToken: " + newToken);
+                    Timber.i("\tToken: " + newToken);
                     callback.success(newToken);
                 }
             });
@@ -228,15 +228,15 @@ public class FCMPlugin extends CordovaPlugin {
                 @Override
                 public void onFailure(final Exception e) {
                     try {
-                        Log.e(TAG, "Error retrieving token: ", e);
+                        Timber.e(e, "Error retrieving token: ");
                         callback.error(exceptionToJson(e));
                     } catch (JSONException jsonErr) {
-                        Log.e(TAG, "Error when parsing json", jsonErr);
+                        Timber.e(jsonErr, "Error when parsing json");
                     }
                 }
             });
         } catch (Exception e) {
-            Log.w(TAG, "\tError retrieving token", e);
+            Timber.w("\tError retrieving token", e);
             try {
                 callback.error(exceptionToJson(e));
             } catch(JSONException je) {}
@@ -299,11 +299,11 @@ public class FCMPlugin extends CordovaPlugin {
         PluginResult dataResult = new PluginResult(PluginResult.Status.OK, jsEventData);
         dataResult.setKeepCallback(true);
         if(FCMPlugin.jsEventBridgeCallbackContext == null) {
-            Log.d(TAG, "\tUnable to send event due to unreachable bridge context");
+            Timber.d("\tUnable to send event due to unreachable bridge context");
             return;
         }
         FCMPlugin.jsEventBridgeCallbackContext.sendPluginResult(dataResult);
-        Log.d(TAG, "\tSent event: " + eventName + " with " + stringifiedJSONValue);
+        Timber.d("\tSent event: " + eventName + " with " + stringifiedJSONValue);
     }
 
     public static void setInitialPushPayload(Map<String, Object> payload) {
@@ -313,25 +313,25 @@ public class FCMPlugin extends CordovaPlugin {
     }
 
     public static void sendPushPayload(Map<String, Object> payload) {
-        Log.d(TAG, "==> FCMPlugin sendPushPayload");
+        Timber.d("==> FCMPlugin sendPushPayload");
         try {
             JSONObject jo = new JSONObject();
             for (String key : payload.keySet()) {
                 jo.put(key, payload.get(key));
-                Log.d(TAG, "\tpayload: " + key + " => " + payload.get(key));
+                Timber.d("\tpayload: " + key + " => " + payload.get(key));
             }
             FCMPlugin.dispatchJSEvent(notificationEventName, jo.toString());
         } catch (Exception e) {
-            Log.d(TAG, "\tERROR sendPushPayload: " + e.getMessage());
+            Timber.d("\tERROR sendPushPayload: " + e.getMessage());
         }
     }
 
     public static void sendTokenRefresh(String token) {
-        Log.d(TAG, "==> FCMPlugin sendTokenRefresh");
+        Timber.d("==> FCMPlugin sendTokenRefresh");
         try {
             FCMPlugin.dispatchJSEvent(tokenRefreshEventName, "\"" + token + "\"");
         } catch (Exception e) {
-            Log.d(TAG, "\tERROR sendTokenRefresh: " + e.getMessage());
+            Timber.d("\tERROR sendTokenRefresh: " + e.getMessage());
         }
     }
 
