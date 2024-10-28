@@ -52,6 +52,10 @@ public class FCMPlugin extends CordovaPlugin {
     @Override
     public void pluginInitialize() {
         super.pluginInitialize();
+        this.setupPlugin();
+    }
+
+    public void setupPlugin() {
         instance = this;
         Timber.d("==> FCMPlugin initialize");
         FirebaseMessaging.getInstance().subscribeToTopic("android");
@@ -61,8 +65,13 @@ public class FCMPlugin extends CordovaPlugin {
     @Override
     public void onDestroy() {
         Timber.i("onDestroy()");
-        instance = null;
-        initialPushPayload = null;
+        if (this == instance) {
+            Timber.d("onDestroy clearing static instance");
+            instance = null;
+            initialPushPayload = null;
+        } else {
+            Timber.d("onDestroy Not clearing static instance");
+        }
     }
 
     public boolean execute(
@@ -107,6 +116,9 @@ public class FCMPlugin extends CordovaPlugin {
                 case ACTION_INIT_DIFFERENT_ACCOUNT:
                     cordova.getThreadPool().execute(() -> {
                         try {
+                            if (instance == null) {
+                                this.setupPlugin();
+                            }
                             Context context = cordova.getActivity();
                             if (!FirebaseApp.getApps(context).isEmpty()) {
                                 FirebaseApp app = FirebaseApp.getInstance("[DEFAULT]");
