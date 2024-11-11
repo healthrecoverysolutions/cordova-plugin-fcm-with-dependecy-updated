@@ -55,16 +55,24 @@ NSMutableArray<NSObject<UNUserNotificationCenterDelegate>*> *subNotificationCent
     [UNUserNotificationCenter currentNotificationCenter].delegate = self;
 }
 
+NSString *currentNotificationRequestId = @"";
 
 // Handle incoming notification messages while app is in the foreground.
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center
        willPresentNotification:(UNNotification *)notification
          withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler {
     DDLogDebug(@"FCMNotificationCenterDelegate.willPresentNotification!");
-    NSDictionary *jsonData = [self extractJSONData:notification withWasTapped:NO];
-    [FCMPlugin dispatchNotification:jsonData];
-    __block UNNotificationPresentationOptions notificationPresentationOptions = UNNotificationPresentationOptionNone;
-    completionHandler(notificationPresentationOptions);
+    // iOS 18 is presenting the notification twice thus handled it https://forums.developer.apple.com/forums/thread/761597
+    if ([currentNotificationRequestId isEqualToString:notification.request.identifier]) {
+        NSLog(@"Already presented the notification thus not showing it: %@", currentNotificationRequestId);
+    } else {
+        currentNotificationRequestId = notification.request.identifier;
+        NSLog(@"Will present a new notification: %@ and %@", notification.request.identifier, currentNotificationRequestId);
+        NSDictionary *jsonData = [self extractJSONData:notification withWasTapped:NO];
+        [FCMPlugin dispatchNotification:jsonData];
+        __block UNNotificationPresentationOptions notificationPresentationOptions = UNNotificationPresentationOptionNone;
+        completionHandler(notificationPresentationOptions);
+    }
 }
 
 // Handle notification messages after display notification is tapped by the user.
