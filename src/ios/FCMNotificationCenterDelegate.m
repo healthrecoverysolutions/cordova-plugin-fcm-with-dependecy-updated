@@ -12,6 +12,7 @@
 // Implement UNUserNotificationCenterDelegate to receive display notification via APNS for devices
 // running iOS 10 and above.
 @interface FCMNotificationCenterDelegate () <UNUserNotificationCenterDelegate>
+
 @end
 
 @implementation FCMNotificationCenterDelegate
@@ -39,8 +40,10 @@ NSMutableArray<NSObject<UNUserNotificationCenterDelegate>*> *subNotificationCent
 }
 
 - (void)configureForNotifications {
+    DDLogDebug(@"FCMNotificationCenterDelegate.configureForNotifications called");
     subNotificationCenterDelegates = [[NSMutableArray alloc]initWithCapacity:0];
     [self setNotificationCenterDelegate];
+    [self initializeRecentNotifications];
     [self forceNotificationCenterDelegate:10];
 }
 
@@ -50,28 +53,66 @@ NSMutableArray<NSObject<UNUserNotificationCenterDelegate>*> *subNotificationCent
     }
     if([UNUserNotificationCenter currentNotificationCenter].delegate != nil) {
         [subNotificationCenterDelegates addObject:[UNUserNotificationCenter currentNotificationCenter].delegate];
-//        DDLogDebug(@"subNotificationCenterDelegates: %@", subNotificationCenterDelegates);
     }
     [UNUserNotificationCenter currentNotificationCenter].delegate = self;
 }
 
-NSString *currentNotificationRequestId = @"";
+NSMutableDictionary<NSString *, NSNumber *> *recentNotifications;
+NSTimeInterval discardThreshold ;
+
+- (void)initializeRecentNotifications {
+    DDLogDebug(@"FCMNotificationCenterDelegate.initializeRecentNotifications called");
+    // Initialize the mutable dictionary here
+    recentNotifications = [NSMutableDictionary dictionary];
+    discardThreshold = 60.0;
+}
 
 // Handle incoming notification messages while app is in the foreground.
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center
        willPresentNotification:(UNNotification *)notification
          withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler {
     DDLogDebug(@"FCMNotificationCenterDelegate.willPresentNotification!");
-    // iOS 18 is presenting the notification twice thus handled it https://forums.developer.apple.com/forums/thread/761597
-    if ([currentNotificationRequestId isEqualToString:notification.request.identifier]) {
-        NSLog(@"Already presented the notification thus not showing it: %@", currentNotificationRequestId);
-    } else {
-        currentNotificationRequestId = notification.request.identifier;
-        NSLog(@"Will present a new notification: %@ and %@", notification.request.identifier, currentNotificationRequestId);
+    // iOS 18 is presenting the notification twice thus handled https://forums.developer.apple.com/forums/thread/761597
+    if(@available(iOS 18, *)) {
+        DDLogDebug(@"iOS 18 handling for notification");
+        NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
+        // Check if the notification ID already exists and is within the discard threshold
+        NSNumber *lastTimestamp = recentNotifications[notification.request.identifier];
+        if (lastTimestamp && (now - [lastTimestamp doubleValue] < discardThreshold)) {
+            NSLog(@"Discarding duplicate notification with id: %@", notification.request.identifier);
+            return;
+        }
+        NSLog(@"Processing notification:"); // Process the notification and update timestamp
+        recentNotifications[notification.request.identifier] = @([[NSDate date] timeIntervalSince1970]);
+        NSLog(@"Will present a new notification: ");
         NSDictionary *jsonData = [self extractJSONData:notification withWasTapped:NO];
         [FCMPlugin dispatchNotification:jsonData];
         __block UNNotificationPresentationOptions notificationPresentationOptions = UNNotificationPresentationOptionNone;
         completionHandler(notificationPresentationOptions);
+        [self cleanUpOldEntries];
+    } else { // For other OS which dont have the issue https://forums.developer.apple.com/forums/thread/761597
+        DDLogDebug(@"Not iOS 18, will present the notification");
+        NSDictionary *jsonData = [self extractJSONData:notification withWasTapped:NO];
+        [FCMPlugin dispatchNotification:jsonData];
+        __block UNNotificationPresentationOptions notificationPresentationOptions = UNNotificationPresentationOptionNone;
+        completionHandler(notificationPresentationOptions);
+    }
+}
+
+- (void)cleanUpOldEntries {
+    NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
+    NSMutableArray *keysToDelete = [NSMutableArray array];
+
+    // Iterate through the dictionary and find entries older than the threshold
+    for (NSString *notificationId in recentNotifications) {
+        NSNumber *timestamp = recentNotifications[notificationId];
+        if (now - [timestamp doubleValue] > discardThreshold) {
+            DDLogDebug(@"DELETING OLD ENTRY %@" , notificationId);
+            [keysToDelete addObject:notificationId];
+        }
+    }
+    if(keysToDelete){    // Remove old entries
+        [recentNotifications removeObjectsForKeys:keysToDelete];
     }
 }
 
