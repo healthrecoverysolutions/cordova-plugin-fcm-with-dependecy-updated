@@ -27,7 +27,7 @@ NSMutableArray<NSObject<UNUserNotificationCenterDelegate>*> *subNotificationCent
     }
     SEL thisMethodSelector = NSSelectorFromString(@"forceNotificationCenterDelegate:");
     if([self respondsToSelector:thisMethodSelector]) {
-//        DDLogDebug(@"FCMNotificationCenterDelegate found: %@", [UNUserNotificationCenter currentNotificationCenter].delegate);
+        DDLogDebug(@"FCMNotificationCenterDelegate found: %@", [UNUserNotificationCenter currentNotificationCenter].delegate);
         float remainingTimeout = timeout - 0.1f;
         NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:[self methodSignatureForSelector:thisMethodSelector]];
         [invocation setSelector:thisMethodSelector];
