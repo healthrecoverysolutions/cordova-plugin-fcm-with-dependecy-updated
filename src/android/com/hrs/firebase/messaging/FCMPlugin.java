@@ -142,7 +142,7 @@ public class FCMPlugin extends CordovaPlugin {
                     });
                     break;
                 case ACTION_GET_DELIVERED_NOTIFICATIONS:
-                    getDeliveredNoticiations(callbackContext);
+                    getDeliveredNotifications(callbackContext);
                 case ACTION_CLEAR_ALL_NOTIFICATIONS:
                     cordova.getThreadPool().execute(() -> {
                         try {
@@ -182,7 +182,7 @@ public class FCMPlugin extends CordovaPlugin {
         return true;
     }
 
-    private void getDeliveredNoticiations(CallbackContext callbackContext) {
+    private void getDeliveredNotifications(CallbackContext callbackContext) {
         Context context = cordova.getActivity();
         NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         // Check if the NotificationManager is available
