@@ -156,6 +156,7 @@ export declare class FirebaseMessagingCordovaInterface {
      */
     unsubscribeFromTopic(topic: string): Promise<void>;
     initDifferentAccount(accountInfo: any): Promise<void>;
+    getDeliveredNotifications(): Promise<void>;
 }
 export declare const FirebaseMessaging: FirebaseMessagingCordovaInterface;
 export {};

@@ -2,8 +2,11 @@ package com.hrs.firebase.messaging;
 
 import androidx.core.app.NotificationManagerCompat;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.os.Bundle;
+import android.service.notification.StatusBarNotification;
 import android.util.Pair;
 
 import com.hrs.firebase.messaging.interfaces.*;
@@ -36,6 +39,7 @@ public class FCMPlugin extends CordovaPlugin {
     private static final String ACTION_CREATE_NOTIFICATION_CHANNEL = "createNotificationChannel";
     private static final String ACTION_DELETE_INSTANCE_ID = "deleteInstanceId";
     private static final String ACTION_HAS_PERMISSION = "hasPermission";
+    private static final String ACTION_GET_DELIVERED_NOTIFICATIONS = "getDeliveredNotifications";
 
     private static final String EVENT_TYPE_NOTIFICATION = "notification";
     private static final String EVENT_TYPE_TOKEN_REFRESH = "tokenRefresh";
@@ -137,6 +141,8 @@ public class FCMPlugin extends CordovaPlugin {
                         }
                     });
                     break;
+                case ACTION_GET_DELIVERED_NOTIFICATIONS:
+                    getDeliveredNoticiations(callbackContext);
                 case ACTION_CLEAR_ALL_NOTIFICATIONS:
                     cordova.getThreadPool().execute(() -> {
                         try {
@@ -174,6 +180,53 @@ public class FCMPlugin extends CordovaPlugin {
         }
 
         return true;
+    }
+
+    private void getDeliveredNoticiations(CallbackContext callbackContext) {
+        Context context = cordova.getActivity();
+        NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        // Check if the NotificationManager is available
+        if (nm != null) {
+            try {
+                // Get active notifications
+                StatusBarNotification[] activeNotifications = nm.getActiveNotifications();
+
+                // Create a JSONArray to hold notification data
+                JSONArray notificationsArray = new JSONArray();
+
+                for (StatusBarNotification sbn : activeNotifications) {
+                    JSONObject notificationJson = new JSONObject();
+
+                    // Extract notification details
+                    notificationJson.put("id", sbn.getId());
+                    notificationJson.put("tag", sbn.getTag());
+                    notificationJson.put("packageName", sbn.getPackageName());
+                    notificationJson.put("postTime", sbn.getPostTime());
+
+                    // Extract notification content if available
+                    if (sbn.getNotification() != null) {
+                        Notification notification = sbn.getNotification();
+                        Bundle extras = notification.extras;
+
+                        // Extract title and body if present
+                        notificationJson.put("title", extras.getString(Notification.EXTRA_TITLE, ""));
+                        notificationJson.put("body", extras.getString(Notification.EXTRA_TEXT, ""));
+                    }
+
+                    // Add the notification JSON object to the array
+                    notificationsArray.put(notificationJson);
+                }
+
+                // Return the JSONArray to the callback context
+                callbackContext.success(notificationsArray);
+
+            } catch (Exception e) {
+                // Handle any potential exceptions
+                callbackContext.error("Error fetching notifications: " + e.getMessage());
+            }
+        } else {
+            callbackContext.error("NotificationManager is not available.");
+        }
     }
 
     public void getInitialPushPayload(CallbackContext callback) {

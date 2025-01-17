@@ -138,7 +138,7 @@ export class FirebaseMessagingCordovaInterface {
     }
 
     private platformIs(type: PlatformType): boolean {
-        return window.cordova?.platformId === type;   
+        return window.cordova?.platformId === type;
     }
 
     public setSharedEventDelegate(callback: FirebaseMessagingEventCallback, error: ErrorCallback): void {
@@ -265,6 +265,10 @@ export class FirebaseMessagingCordovaInterface {
 
     public initDifferentAccount(accountInfo: any): Promise<void> {
         return invoke('initDifferentAccount', accountInfo);
+    }
+
+    public getDeliveredNotifications(): Promise<void> {
+        return invoke('getDeliveredNotifications');
     }
 }
 

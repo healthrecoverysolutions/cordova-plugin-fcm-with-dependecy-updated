@@ -167,6 +167,9 @@ var FirebaseMessagingCordovaInterface = /** @class */ (function () {
     FirebaseMessagingCordovaInterface.prototype.initDifferentAccount = function (accountInfo) {
         return invoke('initDifferentAccount', accountInfo);
     };
+    FirebaseMessagingCordovaInterface.prototype.getDeliveredNotifications = function () {
+        return invoke('getDeliveredNotifications');
+    };
     return FirebaseMessagingCordovaInterface;
 }());
 exports.FirebaseMessagingCordovaInterface = FirebaseMessagingCordovaInterface;
