@@ -22,6 +22,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Objects;
@@ -43,6 +44,8 @@ public class FCMPlugin extends CordovaPlugin {
 
     private static final String EVENT_TYPE_NOTIFICATION = "notification";
     private static final String EVENT_TYPE_TOKEN_REFRESH = "tokenRefresh";
+    private static final String EVENT_TYPE_CALL_DECLINED = "callDeclined";
+    private static final String EVENT_TYPE_CALL_MISSED = "callMissed";
 
     private static final String KEY_TYPE = "type";
     private static final String KEY_DATA = "data";
@@ -142,7 +145,7 @@ public class FCMPlugin extends CordovaPlugin {
                     });
                     break;
                 case ACTION_GET_DELIVERED_NOTIFICATIONS:
-                    getDeliveredNotifications(callbackContext);
+                    getDeliveredNoticiations(callbackContext);
                 case ACTION_CLEAR_ALL_NOTIFICATIONS:
                     cordova.getThreadPool().execute(() -> {
                         try {
@@ -182,7 +185,7 @@ public class FCMPlugin extends CordovaPlugin {
         return true;
     }
 
-    private void getDeliveredNotifications(CallbackContext callbackContext) {
+        private void getDeliveredNoticiations(CallbackContext callbackContext) {
         Context context = cordova.getActivity();
         NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         // Check if the NotificationManager is available
@@ -393,11 +396,7 @@ public class FCMPlugin extends CordovaPlugin {
     public static void sendPushPayload(Map<String, Object> payload) {
         Timber.d("==> FCMPlugin sendPushPayload");
         try {
-            JSONObject jsonPayload = new JSONObject();
-            for (String key : payload.keySet()) {
-                jsonPayload.put(key, payload.get(key));
-                Timber.d("\tpayload: " + key + " => " + payload.get(key));
-            }
+            JSONObject jsonPayload = Utils.hashMapToJSONObject((HashMap<String, Object>) payload);
             FCMPlugin.bufferJSEvent(EVENT_TYPE_NOTIFICATION, jsonPayload);
         } catch (Exception e) {
             Timber.e(e, "\tERROR sendPushPayload: %s", e.getMessage());
@@ -411,6 +410,26 @@ public class FCMPlugin extends CordovaPlugin {
             FCMPlugin.bufferJSEvent(EVENT_TYPE_TOKEN_REFRESH, data);
         } catch (Exception e) {
             Timber.e(e, "\tERROR sendTokenRefresh: %s", e.getMessage());
+        }
+    }
+
+    public static void sendCallDeclined(Map<String, Object> payload) {
+        Timber.d("==> FCMPlugin sendCallDeclined");
+        try {
+            JSONObject jsonPayload = Utils.hashMapToJSONObject((HashMap<String, Object>) payload);
+            FCMPlugin.bufferJSEvent(EVENT_TYPE_CALL_DECLINED, jsonPayload);
+        } catch (Exception e) {
+            Timber.e(e, "\tERROR sendPushPayload: %s", e.getMessage());
+        }
+    }
+
+    public static void sendCallMissed(Map<String, Object> payload) {
+        Timber.d("==> FCMPlugin sendCallDeclined");
+        try {
+            JSONObject jsonPayload = Utils.hashMapToJSONObject((HashMap<String, Object>) payload);
+            FCMPlugin.bufferJSEvent(EVENT_TYPE_CALL_MISSED, jsonPayload);
+        } catch (Exception e) {
+            Timber.e(e, "\tERROR sendPushPayload: %s", e.getMessage());
         }
     }
 }

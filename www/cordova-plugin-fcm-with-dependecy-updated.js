@@ -37,6 +37,8 @@ var FirebaseMessagingEventType;
 (function (FirebaseMessagingEventType) {
     FirebaseMessagingEventType["NOTIFICATION"] = "notification";
     FirebaseMessagingEventType["TOKEN_REFRESH"] = "tokenRefresh";
+    FirebaseMessagingEventType["CALL_DECLINED"] = "callDeclined";
+    FirebaseMessagingEventType["CALL_MISSED"] = "callMissed";
 })(FirebaseMessagingEventType || (exports.FirebaseMessagingEventType = FirebaseMessagingEventType = {}));
 function invoke(method) {
     var args = [];

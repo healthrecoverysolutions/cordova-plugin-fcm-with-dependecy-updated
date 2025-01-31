@@ -44,7 +44,9 @@ enum PlatformType {
 
 export enum FirebaseMessagingEventType {
     NOTIFICATION = 'notification',
-    TOKEN_REFRESH = 'tokenRefresh'
+    TOKEN_REFRESH = 'tokenRefresh',
+    CALL_DECLINED = 'callDeclined',
+    CALL_MISSED = 'callMissed'
 }
 
 export interface IChannelConfiguration {
