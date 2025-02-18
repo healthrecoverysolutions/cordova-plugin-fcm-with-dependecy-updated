@@ -5,6 +5,7 @@ import androidx.core.app.NotificationManagerCompat;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.service.notification.StatusBarNotification;
 import android.util.Pair;
@@ -167,6 +168,7 @@ public class FCMPlugin extends CordovaPlugin {
                             NotificationManager nm = (NotificationManager) context
                                 .getSystemService(Context.NOTIFICATION_SERVICE);
                             nm.cancelAll();
+                            clearStoredNotifications(context);
                             callbackContext.success();
                         } catch (Exception e) {
                             callbackContext.error(e.getMessage());
@@ -200,50 +202,33 @@ public class FCMPlugin extends CordovaPlugin {
     }
 
         private void getDeliveredNoticiations(CallbackContext callbackContext) {
-        Context context = cordova.getActivity();
-        NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        // Check if the NotificationManager is available
-        if (nm != null) {
             try {
-                // Get active notifications
-                StatusBarNotification[] activeNotifications = nm.getActiveNotifications();
+                Context context = cordova.getActivity();
+                JSONObject notifications = new JSONObject();
+                SharedPreferences sharedPreferences = context.getSharedPreferences("PendingNotifications", Context.MODE_PRIVATE);
+                String notificationsString = sharedPreferences.getString("notifications", "");
 
-                // Create a JSONArray to hold notification data
-                JSONArray notificationsArray = new JSONArray();
-
-                for (StatusBarNotification sbn : activeNotifications) {
-                    JSONObject notificationJson = new JSONObject();
-
-                    // Extract notification details
-                    notificationJson.put("id", sbn.getId());
-                    notificationJson.put("tag", sbn.getTag());
-                    notificationJson.put("packageName", sbn.getPackageName());
-                    notificationJson.put("postTime", sbn.getPostTime());
-
-                    // Extract notification content if available
-                    if (sbn.getNotification() != null) {
-                        Notification notification = sbn.getNotification();
-                        Bundle extras = notification.extras;
-
-                        // Extract title and body if present
-                        notificationJson.put("title", extras.getString(Notification.EXTRA_TITLE, ""));
-                        notificationJson.put("body", extras.getString(Notification.EXTRA_TEXT, ""));
-                    }
-
-                    // Add the notification JSON object to the array
-                    notificationsArray.put(notificationJson);
+                if (!notificationsString.isEmpty()) {
+                    notifications = new JSONObject(notificationsString);
                 }
 
-                // Return the JSONArray to the callback context
-                callbackContext.success(notificationsArray);
+                JSONArray notificationsArray = Utils.convertToJsonArray(notifications);
+
+                clearStoredNotifications(context);
+
+                JSONObject result = new JSONObject().put("notifications", notificationsArray);
+                callbackContext.success(result);
 
             } catch (Exception e) {
-                // Handle any potential exceptions
                 callbackContext.error("Error fetching notifications: " + e.getMessage());
             }
-        } else {
-            callbackContext.error("NotificationManager is not available.");
-        }
+    }
+
+    private static void clearStoredNotifications(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences("PendingNotifications", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.remove("notifications");
+        editor.apply();
     }
 
     public void getInitialPushPayload(CallbackContext callback) {

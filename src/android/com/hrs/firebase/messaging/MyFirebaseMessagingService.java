@@ -3,7 +3,9 @@ package com.hrs.firebase.messaging;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -13,6 +15,7 @@ import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
 import org.apache.cordova.CordovaWebView;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -82,12 +85,32 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 broadcastCallLeft(this);
             } else if (jsonData != null && !jsonData.optString("title").isEmpty()) {
                 handleGenericNotification(jsonData);
+                try {
+                    storeNotification(remoteMessage.getMessageId(), jsonData);
+                } catch (JSONException e) {
+                   Timber.e("Failed to store background notification: %s", e.getMessage());
+                }
             } else {
                 FCMPlugin.sendPushPayload(data);
             }
         }
 
         Timber.d("	Notification Data: %s", data.toString());
+    }
+
+    private void storeNotification(String id, JSONObject jsonData) throws JSONException {
+        JSONObject notifications = new JSONObject();
+        SharedPreferences sharedPreferences = getSharedPreferences("PendingNotifications", Context.MODE_PRIVATE);
+        String notificationsString = sharedPreferences.getString("notifications", "");
+        if (!notificationsString.isEmpty()) {
+            notifications = new JSONObject(notificationsString);
+        }
+
+        notifications.put(String.valueOf(Utils.createNotificationId(id)), jsonData);
+
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("notifications", notifications.toString());
+        editor.apply();
     }
 
     private void broadcastCallLeft(Context context) {

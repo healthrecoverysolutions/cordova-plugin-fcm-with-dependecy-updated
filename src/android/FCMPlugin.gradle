@@ -103,7 +103,6 @@ dependencies {
         implementation platform("com.google.firebase:firebase-bom:${ANDROID_FIREBASE_BOM_VERSION}")
         implementation "com.google.firebase:firebase-messaging"
     }
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.4.0" // Latest version
 }
 // apply plugin: 'com.google.gms.google-services'
 // class must be used instead of id(string) to be able to apply plugin from non-root gradle file

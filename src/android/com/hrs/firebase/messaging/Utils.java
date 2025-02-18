@@ -106,6 +106,18 @@ public class Utils {
         return jsonPayload;
     }
 
+    public static JSONArray convertToJsonArray(JSONObject jsonObject) throws JSONException {
+        JSONArray jsonArray = new JSONArray();
+        Iterator<String> keys = jsonObject.keys();
+
+        while (keys.hasNext()) {
+            String key = keys.next();
+            jsonArray.put(jsonObject.get(key));
+        }
+
+        return jsonArray;
+    }
+
     /**
      * Converts HRS Unique Notification ID included in Notifications to int
      * Can be used to consistently reference the same unique id passed to the OS from the id included in the notification from our backend

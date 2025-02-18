@@ -23,8 +23,6 @@ public class IncomingCallActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-
-
         Intent incomingCallIntent = getIntent();
         Bundle data = incomingCallIntent.getBundleExtra("data");
         int notificationId = incomingCallIntent.getIntExtra("notificationId", 0);
@@ -63,14 +61,13 @@ public class IncomingCallActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.decline_button).setOnClickListener(view -> {
-            Intent intent = new Intent(IncomingCallActivity.this, FCMPluginActivity.class);
+            Intent intent = new Intent(IncomingCallActivity.this, DeclineCallReceiver.class);
             intent.setAction("DECLINE_CALL");
             intent.putExtra("data", data);
             intent.putExtra("notificationId", notificationId);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(intent);
+            this.sendBroadcast(intent);
 
-            finish(); // Close the IncomingCallActivity after declining
+            finish();
         });
     }
 

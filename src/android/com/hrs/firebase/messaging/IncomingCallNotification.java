@@ -125,7 +125,6 @@ public class IncomingCallNotification {
         fullScreenIntent.putExtra("notificationId", NOTIFICATION_ID);
         fullScreenIntent.putExtra("caller", caller);
         fullScreenIntent.putExtra("title", title);
-        fullScreenIntent.setAction("OPEN_CALL");
         return PendingIntent.getActivity(
             context,
             2,

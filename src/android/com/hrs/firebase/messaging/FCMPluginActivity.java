@@ -4,8 +4,12 @@ import android.app.Activity;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,13 +32,11 @@ public class FCMPluginActivity extends Activity {
         String action = intent.getAction();
         if (action != null && action.equals("ANSWER_CALL")) {
             this.openCall(intent, true);
-        } else if (action != null && action.equals("OPEN_CALL")) {
-            this.openCall(intent, false);
         } else {
             this.sendPushPayload();
         }
 
-        forceMainActivityReload();
+        bringMainActivityToFront();
         finish();
     }
 
@@ -43,6 +45,30 @@ public class FCMPluginActivity extends Activity {
         if(intentExtras == null) {
             return;
         }
+
+        int notificationId = intentExtras.getInt("notificationId");
+        NotificationManager notificationManager =
+            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (notificationManager != null) {
+            notificationManager.cancel(notificationId);
+        }
+
+        // get notifications from shared preferences and remove the notification that was tapped
+        JSONObject notifications = new JSONObject();
+        SharedPreferences sharedPreferences = getSharedPreferences("PendingNotifications", Context.MODE_PRIVATE);
+        String notificationsString = sharedPreferences.getString("notifications", "");
+        if (!notificationsString.isEmpty()) {
+            try {
+                notifications = new JSONObject(notificationsString);
+            } catch (JSONException e) {
+                Timber.e("Failed to parse notfications json string: %s", e.getMessage());
+            }
+        }
+        notifications.remove(String.valueOf(notificationId));
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("notifications", notifications.toString());
+        editor.apply();
+
         Timber.d("==> USER TAPPED NOTIFICATION");
         Map<String, Object> data = Utils.bundleToHashMap((Bundle) Objects.requireNonNull(intentExtras.get("data")));
         data.put("wasTapped", true);
@@ -54,6 +80,16 @@ public class FCMPluginActivity extends Activity {
         PackageManager pm = getPackageManager();
         Intent launchIntent = pm.getLaunchIntentForPackage(getApplicationContext().getPackageName());
         startActivity(launchIntent);
+    }
+
+    private void bringMainActivityToFront() {
+        PackageManager pm = getPackageManager();
+        Intent launchIntent = pm.getLaunchIntentForPackage(getApplicationContext().getPackageName());
+        if (launchIntent != null) {
+            // Set flag to bring the activity to the front instead of starting a new one
+            launchIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            startActivity(launchIntent);
+        }
     }
 
     private void openCall(Intent intent, boolean wasTapped) {
@@ -71,12 +107,6 @@ public class FCMPluginActivity extends Activity {
         FCMPlugin.setInitialPushPayload(data);
         FCMPlugin.sendPushPayload(data);
         forceMainActivityReload();
-    }
-
-    private void declineCall(Intent intent) {
-        // TODO: FIX DATA
-        FCMPlugin.sendCallDeclined(new HashMap<>());
-        clearIncomingCall(intent);
     }
 
     private void clearIncomingCall(Intent intent) {
