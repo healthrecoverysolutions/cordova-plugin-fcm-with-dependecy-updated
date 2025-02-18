@@ -269,7 +269,7 @@ export class FirebaseMessagingCordovaInterface {
         return invoke('initDifferentAccount', accountInfo);
     }
 
-    public getDeliveredNotifications(): Promise<void> {
+    public getDeliveredNotifications(): Promise<any> {
         return invoke('getDeliveredNotifications');
     }
 }

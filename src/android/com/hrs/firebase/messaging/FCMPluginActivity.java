@@ -61,7 +61,7 @@ public class FCMPluginActivity extends Activity {
             try {
                 notifications = new JSONObject(notificationsString);
             } catch (JSONException e) {
-                Timber.e("Failed to parse notfications json string: %s", e.getMessage());
+                Timber.e("Failed to parse notifications json string: %s", e.getMessage());
             }
         }
         notifications.remove(String.valueOf(notificationId));
