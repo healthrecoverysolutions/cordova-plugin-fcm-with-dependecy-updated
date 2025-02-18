@@ -14,8 +14,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import java.util.Objects;
 
-import ionic.hrsmobile.byod.patient.dev2.R;
-
 public class IncomingCallActivity extends AppCompatActivity {
 
     @SuppressLint("MissingInflatedId")
@@ -40,16 +38,21 @@ public class IncomingCallActivity extends AppCompatActivity {
         IntentFilter callLeftFilter = new IntentFilter("CALL_LEFT");
         LocalBroadcastManager.getInstance(this).registerReceiver(finishReceiver, callLeftFilter);
 
-        setContentView(R.layout.activity_incoming_call);
+        int layoutId = getResources().getIdentifier("activity_incoming_call", "layout", getPackageName());
+        setContentView(layoutId);
 
         hideSystemUI();
-        TextView callerNameTextView = findViewById(R.id.caller_name);
+
+        int callerNameId = getResources().getIdentifier("caller_name", "id", getPackageName());
+        TextView callerNameTextView = findViewById(callerNameId);
         callerNameTextView.setText(caller);
 
-        TextView callText = findViewById(R.id.call_title);
+        int callTitleId = getResources().getIdentifier("call_title", "id", getPackageName());
+        TextView callText = findViewById(callTitleId);
         callText.setText(title);
 
-        findViewById(R.id.answer_button).setOnClickListener(view -> {
+        int answerButtonId = getResources().getIdentifier("answer_button", "id", getPackageName());
+        findViewById(answerButtonId).setOnClickListener(view -> {
             Intent intent = new Intent(IncomingCallActivity.this, FCMPluginActivity.class);
             intent.setAction("ANSWER_CALL");
             intent.putExtra("data", data);
@@ -60,7 +63,8 @@ public class IncomingCallActivity extends AppCompatActivity {
             finish();
         });
 
-        findViewById(R.id.decline_button).setOnClickListener(view -> {
+        int declineButtonId = getResources().getIdentifier("decline_button", "id", getPackageName());
+        findViewById(declineButtonId).setOnClickListener(view -> {
             Intent intent = new Intent(IncomingCallActivity.this, DeclineCallReceiver.class);
             intent.setAction("DECLINE_CALL");
             intent.putExtra("data", data);
