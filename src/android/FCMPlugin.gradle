@@ -14,7 +14,7 @@ buildscript {
             } catch(Exception e1) {
                 def WARNING_STYLE = "${(char)27}[33;49"+"m"
                 def DEFAULT_STYLE = "${(char)27}[39;49"+"m"
-                print(WARNING_STYLE+"FCMPlugin: Plugin install variables are not accessible, as package.json was unreachable/unreadable."+DEFAULT_STYLE)                
+                print(WARNING_STYLE+"FCMPlugin: Plugin install variables are not accessible, as package.json was unreachable/unreadable."+DEFAULT_STYLE)
             }
         }
         // Override config with project values if available
@@ -32,7 +32,7 @@ buildscript {
     dependencies {
         // Load system enviroment defined values, or, if unavailable, plugin defaults
         def ANDROID_GOOGLE_SERVICES_VERSION = System.getenv('ANDROID_GOOGLE_SERVICES_VERSION') ?: '4.3.4'
-        def ANDROID_GRADLE_TOOLS_VERSION = System.getenv('ANDROID_GRADLE_TOOLS_VERSION') ?: '7.4.2'      
+        def ANDROID_GRADLE_TOOLS_VERSION = System.getenv('ANDROID_GRADLE_TOOLS_VERSION') ?: '7.4.2'
         try {
             // Load configuration from install variables (package.json) two directories above
             def PLUGIN_CONFIG = new groovy.json.JsonSlurper().parseText(file("${projectDir}/../../package.json").text).cordova.plugins['cordova-plugin-fcm-with-dependecy-updated']
@@ -47,7 +47,7 @@ buildscript {
             } catch(Exception e1) {
                 def WARNING_STYLE = "${(char)27}[33;49"+"m"
                 def DEFAULT_STYLE = "${(char)27}[39;49"+"m"
-                print(WARNING_STYLE+"FCMPlugin: Plugin install variables are not accessible, as package.json was unreachable/unreadable."+DEFAULT_STYLE)                
+                print(WARNING_STYLE+"FCMPlugin: Plugin install variables are not accessible, as package.json was unreachable/unreadable."+DEFAULT_STYLE)
             }
         }
         // Override config with project values if available
@@ -83,7 +83,7 @@ dependencies {
         } catch(Exception e1) {
             def WARNING_STYLE = "${(char)27}[33;49"+"m"
             def DEFAULT_STYLE = "${(char)27}[39;49"+"m"
-            print(WARNING_STYLE+"FCMPlugin: Plugin install variables are not accessible, as package.json was unreachable/unreadable."+DEFAULT_STYLE)                
+            print(WARNING_STYLE+"FCMPlugin: Plugin install variables are not accessible, as package.json was unreachable/unreadable."+DEFAULT_STYLE)
         }
     }
     // Override config with project values if available
@@ -103,6 +103,7 @@ dependencies {
         implementation platform("com.google.firebase:firebase-bom:${ANDROID_FIREBASE_BOM_VERSION}")
         implementation "com.google.firebase:firebase-messaging"
     }
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.4.0" // Latest version
 }
 // apply plugin: 'com.google.gms.google-services'
 // class must be used instead of id(string) to be able to apply plugin from non-root gradle file

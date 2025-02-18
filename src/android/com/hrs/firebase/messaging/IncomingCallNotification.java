@@ -1,5 +1,6 @@
 package com.hrs.firebase.messaging;
 
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -13,12 +14,15 @@ import android.os.Build;
 import android.media.RingtoneManager;
 import android.os.Bundle;
 
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
 
 public class IncomingCallNotification {
     private static final String CHANNEL_ID = "incoming_call_notification_channel";
@@ -29,11 +33,11 @@ public class IncomingCallNotification {
             (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
         createNotificationChannel(notificationManager);
+
+        String title = data.getString("title");
         PendingIntent answerPendingIntent = getAnswerIntent(context, data);
         PendingIntent declinePendingIntent = getDeclineIntent(context, data);
-        PendingIntent fullScreenPendingIntent = getFullScreenIntent(context);
-
-
+        PendingIntent fullScreenPendingIntent = getFullScreenIntent(context, data, callerName, title);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             Person incomingCaller = new Person.Builder()
@@ -42,7 +46,7 @@ public class IncomingCallNotification {
                 .build();
 
             Notification.Builder builder = new Notification.Builder(context, CHANNEL_ID)
-                .setContentTitle(data.getString("title"))
+                .setContentTitle(title)
                 .setSmallIcon(android.R.drawable.sym_call_incoming)
                 .setStyle(
                     Notification.CallStyle.forIncomingCall(
@@ -51,26 +55,18 @@ public class IncomingCallNotification {
                         answerPendingIntent
                     )
                 )
+                .setContentIntent(answerPendingIntent)
                 .setFullScreenIntent(fullScreenPendingIntent, true)
+                .setVisibility(Notification.VISIBILITY_PUBLIC)
                 .setOngoing(true);
 
             notificationManager.notify(NOTIFICATION_ID, builder.build());
             Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
             MyRingtoneManager.getInstance().playRingtone(context, soundUri, 1000);
-            scheduleDismissal(notificationManager);
-        } else {
-            // Fallback for older versions (show a basic notification or skip)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Notification.Builder builder = new Notification.Builder(context, CHANNEL_ID)
-                    .setContentTitle("Incoming Call")
-                    .setContentText(callerName)
-                    .setSmallIcon(android.R.drawable.sym_call_incoming)
-                    .setPriority(Notification.PRIORITY_HIGH)
-                    .setFullScreenIntent(fullScreenPendingIntent, true);
-                notificationManager.notify(NOTIFICATION_ID, builder.build());
-            }
+            scheduleDismissal(context, notificationManager);
         }
     }
+
     private void createNotificationChannel(NotificationManager notificationManager) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel existingChannel = notificationManager.getNotificationChannel(CHANNEL_ID);
@@ -86,7 +82,7 @@ public class IncomingCallNotification {
 
             NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID,
-                "Incoming Video Calls",
+                "Incoming Calls",
                 NotificationManager.IMPORTANCE_HIGH
             );
             channel.setDescription("Notifications for incoming calls");
@@ -109,11 +105,12 @@ public class IncomingCallNotification {
     }
 
     private PendingIntent getAnswerIntent(Context context, JSONObject data) throws JSONException {
-        Intent answerIntent = new Intent(context, AnswerCallReceiver.class);
+        Intent answerIntent = new Intent(context, FCMPluginActivity.class);
         Bundle bundle = Utils.jsonToBundle(data);
         answerIntent.putExtra("data", bundle);
         answerIntent.putExtra("notificationId", NOTIFICATION_ID);
-        return PendingIntent.getBroadcast(
+        answerIntent.setAction("ANSWER_CALL");
+        return PendingIntent.getActivity(
             context,
             0,
             answerIntent,
@@ -121,8 +118,14 @@ public class IncomingCallNotification {
         );
     }
 
-    private PendingIntent getFullScreenIntent(Context context) {
+    private PendingIntent getFullScreenIntent(Context context, JSONObject data, String caller, String title) throws JSONException {
         Intent fullScreenIntent = new Intent(context, IncomingCallActivity.class);
+        Bundle bundle = Utils.jsonToBundle(data);
+        fullScreenIntent.putExtra("data", bundle);
+        fullScreenIntent.putExtra("notificationId", NOTIFICATION_ID);
+        fullScreenIntent.putExtra("caller", caller);
+        fullScreenIntent.putExtra("title", title);
+        fullScreenIntent.setAction("OPEN_CALL");
         return PendingIntent.getActivity(
             context,
             2,
@@ -131,11 +134,13 @@ public class IncomingCallNotification {
         );
     }
 
-    private void scheduleDismissal(NotificationManager notificationManager) {
+    private void scheduleDismissal(Context context, NotificationManager notificationManager) {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.schedule(() -> {
             notificationManager.cancel(NOTIFICATION_ID);
             MyRingtoneManager.getInstance().stopRingtone();
+            Intent intent = new Intent("FINISH_INCOMING_CALL_ACTIVITY");
+            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
             scheduler.shutdown();
         }, 10, TimeUnit.SECONDS);
     }

@@ -9,6 +9,7 @@ import android.os.Bundle;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import timber.log.Timber;
 
@@ -23,9 +24,18 @@ public class FCMPluginActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Timber.d("==> FCMPluginActivity onCreate");
-        this.sendPushPayload();
-        finish();
+        Intent intent = getIntent();
+        String action = intent.getAction();
+        if (action != null && action.equals("ANSWER_CALL")) {
+            this.openCall(intent, true);
+        } else if (action != null && action.equals("OPEN_CALL")) {
+            this.openCall(intent, false);
+        } else {
+            this.sendPushPayload();
+        }
+
         forceMainActivityReload();
+        finish();
     }
 
     private void sendPushPayload() {
@@ -34,13 +44,8 @@ public class FCMPluginActivity extends Activity {
             return;
         }
         Timber.d("==> USER TAPPED NOTIFICATION");
-        Map<String, Object> data = new HashMap<String, Object>();
+        Map<String, Object> data = Utils.bundleToHashMap((Bundle) Objects.requireNonNull(intentExtras.get("data")));
         data.put("wasTapped", true);
-        for (String key : intentExtras.keySet()) {
-            Object value = intentExtras.get(key);
-            Timber.d("\tKey: " + key + " Value: " + value);
-            data.put(key, value);
-        }
         FCMPlugin.setInitialPushPayload(data);
         FCMPlugin.sendPushPayload(data);
     }
@@ -49,6 +54,39 @@ public class FCMPluginActivity extends Activity {
         PackageManager pm = getPackageManager();
         Intent launchIntent = pm.getLaunchIntentForPackage(getApplicationContext().getPackageName());
         startActivity(launchIntent);
+    }
+
+    private void openCall(Intent intent, boolean wasTapped) {
+        Bundle bundle = intent.getBundleExtra("data");
+        HashMap<String, Object> data = new HashMap<>();
+        if (bundle != null) {
+            data = Utils.bundleToHashMap(bundle);
+        }
+
+        // makes pcm answer the call
+        data.put("wasTapped", wasTapped);
+
+       clearIncomingCall(intent);
+
+        FCMPlugin.setInitialPushPayload(data);
+        FCMPlugin.sendPushPayload(data);
+        forceMainActivityReload();
+    }
+
+    private void declineCall(Intent intent) {
+        // TODO: FIX DATA
+        FCMPlugin.sendCallDeclined(new HashMap<>());
+        clearIncomingCall(intent);
+    }
+
+    private void clearIncomingCall(Intent intent) {
+        MyRingtoneManager.getInstance().stopRingtone();
+        int notificationId = intent.getIntExtra("notificationId", -1);
+        NotificationManager notificationManager =
+            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (notificationManager != null && notificationId != -1) {
+            notificationManager.cancel(notificationId);
+        }
     }
 
     @Override

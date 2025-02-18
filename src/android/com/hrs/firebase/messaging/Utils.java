@@ -2,9 +2,11 @@ package com.hrs.firebase.messaging;
 
 import android.os.Bundle;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -29,44 +31,87 @@ public class Utils {
                 bundle.putDouble(key, (Double) value);
             } else if (value instanceof Long) {
                 bundle.putLong(key, (Long) value);
-            } else if(value instanceof JSONObject) {
+            } else if (value instanceof JSONObject) {
                 bundle.putBundle(key, jsonToBundle((JSONObject) value));
+            } else if (value instanceof JSONArray) {
+                bundle.putSerializable(key, jsonArrayToArrayList((JSONArray) value));
             }
         }
 
         return bundle;
     }
 
+    private static ArrayList<Object> jsonArrayToArrayList(JSONArray jsonArray) throws JSONException {
+        ArrayList<Object> list = new ArrayList<>();
+        for (int i = 0; i < jsonArray.length(); i++) {
+            Object value = jsonArray.get(i);
+            if (value instanceof JSONObject) {
+                list.add(jsonToBundle((JSONObject) value));
+            } else if (value instanceof JSONArray) {
+                list.add(jsonArrayToArrayList((JSONArray) value));
+            } else {
+                list.add(value);
+            }
+        }
+        return list;
+    }
+
     public static HashMap<String, Object> bundleToHashMap(Bundle bundle) {
         HashMap<String, Object> map = new HashMap<>();
+
         for (String key : bundle.keySet()) {
-            if (bundle.get(key) instanceof Bundle) {
-                HashMap<String, Object> innerMap = new HashMap<>();
-                Bundle innerBundle = (Bundle) bundle.get(key);
-                if (innerBundle != null) {
-                    innerMap = bundleToHashMap(innerBundle);
-                }
-                map.put(key, innerMap);
-                continue;
+            Object value = bundle.get(key);
+
+            if (value instanceof Bundle) {
+                map.put(key, bundleToHashMap((Bundle) value));
+            } else if (value instanceof ArrayList) {
+                map.put(key, arrayListToJsonArray((ArrayList<?>) value));
+            } else {
+                map.put(key, value);
             }
-            map.put(key, bundle.get(key));
         }
 
         return map;
     }
 
+    private static JSONArray arrayListToJsonArray(ArrayList<?> list) {
+        JSONArray jsonArray = new JSONArray();
+        for (Object value : list) {
+            if (value instanceof Bundle) {
+                jsonArray.put(new JSONObject(bundleToHashMap((Bundle) value)));
+            } else if (value instanceof ArrayList) {
+                jsonArray.put(arrayListToJsonArray((ArrayList<?>) value));
+            } else {
+                jsonArray.put(value);
+            }
+        }
+        return jsonArray;
+    }
+
     public static JSONObject hashMapToJSONObject(HashMap<String, Object> hashMap) throws JSONException {
         JSONObject jsonPayload = new JSONObject();
+
         for (String key : hashMap.keySet()) {
-            if (hashMap.get(key) instanceof HashMap) {
-                JSONObject innerJSONObject = hashMapToJSONObject((HashMap<String, Object>) hashMap.get(key));
-                jsonPayload.put(key, innerJSONObject);
+            Object value = hashMap.get(key);
+
+            if (value instanceof HashMap) {
+                jsonPayload.put(key, hashMapToJSONObject((HashMap<String, Object>) value));
+            } else if (value instanceof ArrayList) {
+                jsonPayload.put(key, arrayListToJsonArray((ArrayList<?>) value));
             } else {
-                jsonPayload.put(key, hashMap.get(key));
+                jsonPayload.put(key, value);
             }
-            Timber.d("\tpayload: " + key + " => " + hashMap.get(key));
         }
 
         return jsonPayload;
+    }
+
+    /**
+     * Converts HRS Unique Notification ID included in Notifications to int
+     * Can be used to consistently reference the same unique id passed to the OS from the id included in the notification from our backend
+     * @return int
+     */
+    public static int createNotificationId(String id) {
+        return Math.abs(id.hashCode());
     }
 }

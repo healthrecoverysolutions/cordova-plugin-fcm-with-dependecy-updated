@@ -56,6 +56,8 @@ public class FCMPlugin extends CordovaPlugin {
     private static Map<String, Object> initialPushPayload = null;
     private CallbackContext sharedEventDelegate = null;
 
+    public static boolean appInForeground = false;
+
     @Override
     public void pluginInitialize() {
         super.pluginInitialize();
@@ -67,6 +69,18 @@ public class FCMPlugin extends CordovaPlugin {
         Timber.d("==> FCMPlugin initialize");
         FirebaseMessaging.getInstance().subscribeToTopic("android");
         FirebaseMessaging.getInstance().subscribeToTopic("all");
+    }
+
+    @Override
+    public void onResume(boolean multitasking) {
+        super.onResume(multitasking);
+        appInForeground = true;
+    }
+
+    @Override
+    public void onPause(boolean multitasking) {
+        super.onPause(multitasking);
+        appInForeground = false;
     }
 
     @Override
@@ -240,11 +254,7 @@ public class FCMPlugin extends CordovaPlugin {
         }
         Timber.d("getInitialPushPayload");
         try {
-            JSONObject jo = new JSONObject();
-            for (String key : initialPushPayload.keySet()) {
-                jo.put(key, initialPushPayload.get(key));
-                Timber.d("\tinitialPushPayload: " + key + " => " + initialPushPayload.get(key));
-            }
+            JSONObject jo = Utils.hashMapToJSONObject((HashMap<String, Object>) initialPushPayload);
             callback.success(jo);
         } catch (Exception error) {
             try {
@@ -424,7 +434,7 @@ public class FCMPlugin extends CordovaPlugin {
     }
 
     public static void sendCallMissed(Map<String, Object> payload) {
-        Timber.d("==> FCMPlugin sendCallDeclined");
+        Timber.d("==> FCMPlugin sendCallMissed");
         try {
             JSONObject jsonPayload = Utils.hashMapToJSONObject((HashMap<String, Object>) payload);
             FCMPlugin.bufferJSEvent(EVENT_TYPE_CALL_MISSED, jsonPayload);

@@ -1,21 +1,30 @@
 package com.hrs.firebase.messaging;
 
+import android.app.KeyguardManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.view.View;
+
 import androidx.annotation.NonNull;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
+import org.apache.cordova.CordovaWebView;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 import timber.log.Timber;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
+
+    public static CordovaWebView webView = null;
 
     @Override
     public void onNewToken(@NonNull String token) {
@@ -57,39 +66,64 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             data.put(key, value);
         }
 
-        JSONObject jsonData = null;
-        try {
-            jsonData = new JSONObject((String) Objects.requireNonNull(data.get("jsonData")));
-        } catch (JSONException e) {
-            Timber.e(e, "Error decoding jsonData from push notification");
-        }
-
-        if (jsonData != null && jsonData.optString("action").equals("incoming_call")) {
-            String name = "";
-            if (jsonData.optString("type").equals("video")) {
-                JSONObject caller = jsonData.optJSONObject("caller");
-                if (caller != null) {
-                    caller.optString("name");
-                }
-            }
-
-            if (jsonData.optString("type").equals("voice") || jsonData.optString("type").equals("voicecall")) {
-                JSONObject callData = jsonData.optJSONObject("data");
-                if (callData != null) {
-                    name = callData.optString("from");
-                }
-            }
-
-            try {
-                new IncomingCallNotification().show(this, jsonData, name);
-            } catch (JSONException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
+        if (FCMPlugin.appInForeground) {
             FCMPlugin.sendPushPayload(data);
+        } else {
+            JSONObject jsonData = null;
+            try {
+                jsonData = new JSONObject((String) Objects.requireNonNull(data.get("jsonData")));
+            } catch (JSONException e) {
+                Timber.e(e, "Error decoding jsonData from push notification");
+            }
+
+            if (jsonData != null && jsonData.optString("action").equals("incoming_call")) {
+                handleIncomingCall(jsonData);
+            } else if (jsonData != null && jsonData.optString("action").equals("call_left")) {
+                broadcastCallLeft(this);
+            } else if (jsonData != null && !jsonData.optString("title").isEmpty()) {
+                handleGenericNotification(jsonData);
+            } else {
+                FCMPlugin.sendPushPayload(data);
+            }
         }
 
         Timber.d("	Notification Data: %s", data.toString());
     }
-    // [END receive_message]
+
+    private void broadcastCallLeft(Context context) {
+        Intent intent = new Intent("CALL_LEFT");
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+    }
+
+    private void handleGenericNotification(JSONObject jsonData) {
+        try {
+            new GenericNotification().show(this, jsonData);
+        } catch (JSONException e) {
+            Timber.e("Failed to generate generic notification  %s", e.getMessage());
+        } catch (PackageManager.NameNotFoundException e) {
+            Timber.e("Failed to find package name/icon for generic notification  %s", e.getMessage());
+        }
+    }
+
+
+    private void handleIncomingCall(JSONObject jsonData) {
+        String name = "";
+        if (jsonData.optString("type").equals("video") || jsonData.optString("type").equals("video-zoom")) {
+            JSONObject caller = jsonData.optJSONObject("caller");
+            if (caller != null) {
+                name = caller.optString("name");
+            }
+        } else if (jsonData.optString("type").equals("voice") || jsonData.optString("type").equals("voicecall")) {
+            JSONObject callData = jsonData.optJSONObject("data");
+            if (callData != null) {
+                name = callData.optString("from");
+            }
+        }
+
+        try {
+            new IncomingCallNotification().show(this, jsonData, name);
+        } catch (JSONException e) {
+            Timber.e("Failed to generate incoming call notification  %s", e.getMessage());
+        }
+    }
 }
