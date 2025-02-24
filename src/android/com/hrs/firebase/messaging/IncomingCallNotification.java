@@ -6,8 +6,10 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Person;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
@@ -21,18 +23,40 @@ import org.json.JSONObject;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+
+import timber.log.Timber;
 
 
 public class IncomingCallNotification {
     private static final String CHANNEL_ID = "incoming_call_notification_channel";
     private static final int NOTIFICATION_ID = 1001;
 
-    public void show(Context context, JSONObject data, String callerName) throws JSONException {
-        NotificationManager notificationManager =
-            (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+    public static final String ACTION_CANCEL_DISMISSAL = "CANCEL_DISMISSAL";
+    private final Context context;
 
-        createNotificationChannel(notificationManager);
+    private ScheduledExecutorService scheduler;
+    private ScheduledFuture<?> scheduledFuture;
+    private final NotificationManager notificationManager;
+
+    public IncomingCallNotification(Context context) {
+        this.notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        this.context = context;
+        LocalBroadcastManager.getInstance(context).registerReceiver(this.cancelReceiver, new IntentFilter(ACTION_CANCEL_DISMISSAL));
+    }
+
+    private final BroadcastReceiver cancelReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Timber.d("#BroadcastReceiver: Received cancel request.");
+            cancelScheduledDismissal();
+        }
+    };
+
+
+    public void show(JSONObject data, String callerName) throws JSONException {
+        createNotificationChannel();
 
         String title = data.getString("title");
         PendingIntent answerPendingIntent = getAnswerIntent(context, data);
@@ -58,21 +82,22 @@ public class IncomingCallNotification {
                 .setContentIntent(answerPendingIntent)
                 .setFullScreenIntent(fullScreenPendingIntent, true)
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
+                .setCategory(Notification.CATEGORY_CALL)
                 .setOngoing(true);
 
-            notificationManager.notify(NOTIFICATION_ID, builder.build());
+            this.notificationManager.notify(NOTIFICATION_ID, builder.build());
             Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
             MyRingtoneManager.getInstance().playRingtone(context, soundUri, 1000);
-            scheduleDismissal(context, notificationManager);
+            scheduleDismissal();
         }
     }
 
-    private void createNotificationChannel(NotificationManager notificationManager) {
+    private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel existingChannel = notificationManager.getNotificationChannel(CHANNEL_ID);
+            NotificationChannel existingChannel = this.notificationManager.getNotificationChannel(CHANNEL_ID);
 
             if (existingChannel != null) {
-                notificationManager.deleteNotificationChannel(CHANNEL_ID);
+                this.notificationManager.deleteNotificationChannel(CHANNEL_ID);
             }
 
             AudioAttributes audioAttributes = new AudioAttributes.Builder()
@@ -87,7 +112,7 @@ public class IncomingCallNotification {
             );
             channel.setDescription("Notifications for incoming calls");
             channel.setSound(null, audioAttributes);
-            notificationManager.createNotificationChannel(channel);
+            this.notificationManager.createNotificationChannel(channel);
         }
     }
 
@@ -133,15 +158,39 @@ public class IncomingCallNotification {
         );
     }
 
-    private void scheduleDismissal(Context context, NotificationManager notificationManager) {
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.schedule(() -> {
-            notificationManager.cancel(NOTIFICATION_ID);
+    private void scheduleDismissal() {
+        Timber.d("#scheduleDismissal(): Scheduling incoming call dismissal");
+        if (scheduler != null && !scheduler.isShutdown()) {
+            scheduler.shutdownNow(); // Cancel any existing scheduler
+        }
+
+        scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduledFuture = scheduler.schedule(() -> {
+            Timber.d("#scheduleDismissal(): Incoming call dismissal triggered");
+            this.notificationManager.cancel(NOTIFICATION_ID);
             MyRingtoneManager.getInstance().stopRingtone();
             Intent intent = new Intent("FINISH_INCOMING_CALL_ACTIVITY");
             LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
             scheduler.shutdown();
-        }, 10, TimeUnit.SECONDS);
+            this.unregisterReceiver();
+        }, 90, TimeUnit.SECONDS);
+    }
+
+    private void cancelScheduledDismissal() {
+        Timber.d("#cancelScheduledDismissal(): Cancelling scheduled incoming call notification dismissal");
+        if (scheduledFuture != null && !scheduledFuture.isDone()) {
+            scheduledFuture.cancel(true);
+        }
+        if (scheduler != null && !scheduler.isShutdown()) {
+            scheduler.shutdownNow();
+        }
+
+        this.unregisterReceiver();
+    }
+
+    public void unregisterReceiver() {
+        Timber.d("#unregisterReceiver(): unregister CANCEL_DISMISSAL incoming call receiver");
+        LocalBroadcastManager.getInstance(context).unregisterReceiver(this.cancelReceiver);
     }
 }
 

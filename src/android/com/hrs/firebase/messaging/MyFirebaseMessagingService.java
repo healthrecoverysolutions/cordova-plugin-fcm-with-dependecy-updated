@@ -69,7 +69,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             data.put(key, value);
         }
 
-        if (FCMPlugin.appInForeground) {
+        if (FCMPlugin.appInForeground || Build.VERSION.SDK_INT <= Build.VERSION_CODES.S) {
             FCMPlugin.sendPushPayload(data);
         } else {
             JSONObject jsonData = null;
@@ -144,7 +144,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         }
 
         try {
-            new IncomingCallNotification().show(this, jsonData, name);
+            new IncomingCallNotification(this).show(jsonData, name);
         } catch (JSONException e) {
             Timber.e("Failed to generate incoming call notification  %s", e.getMessage());
         }

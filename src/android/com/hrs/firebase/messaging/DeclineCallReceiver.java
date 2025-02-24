@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import java.util.HashMap;
 
 public class DeclineCallReceiver extends BroadcastReceiver {
@@ -24,6 +26,9 @@ public class DeclineCallReceiver extends BroadcastReceiver {
         if (notificationManager != null && notificationId != -1) {
             notificationManager.cancel(notificationId);
         }
+
+        Intent cancelIntent = new Intent(IncomingCallNotification.ACTION_CANCEL_DISMISSAL);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(cancelIntent);
 
         FCMPlugin.sendCallDeclined(data);
     }
