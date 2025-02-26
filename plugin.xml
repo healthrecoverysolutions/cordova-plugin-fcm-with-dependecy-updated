@@ -83,6 +83,7 @@
 		<source-file src="src/android/com/hrs/firebase/messaging/IncomingCallNotification.java" target-dir="src/com/hrs/firebase/messaging" />
 		<source-file src="src/android/com/hrs/firebase/messaging/MyRingtoneManager.java" target-dir="src/com/hrs/firebase/messaging" />
 		<source-file src="src/android/com/hrs/firebase/messaging/Utils.java" target-dir="src/com/hrs/firebase/messaging" />
+		<source-file src="src/android/com/hrs/firebase/messaging/SharedPreferencesManager.java" target-dir="src/com/hrs/firebase/messaging" />
 		<source-file src="src/android/com/hrs/firebase/messaging/interfaces/OnFinishedListener.java" target-dir="src/com/hrs/firebase/messaging/interfaces" />
 		<source-file src="src/android/com/hrs/firebase/messaging/interfaces/TokenListeners.java" target-dir="src/com/hrs/firebase/messaging/interfaces" />
 
