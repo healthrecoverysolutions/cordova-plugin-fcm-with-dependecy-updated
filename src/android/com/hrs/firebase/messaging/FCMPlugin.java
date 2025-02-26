@@ -1,10 +1,12 @@
 package com.hrs.firebase.messaging;
 
 import androidx.core.app.NotificationManagerCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.service.notification.StatusBarNotification;
@@ -75,6 +77,8 @@ public class FCMPlugin extends CordovaPlugin {
     @Override
     public void onResume(boolean multitasking) {
         super.onResume(multitasking);
+        Intent intent = new Intent("CALL_LEFT");
+        LocalBroadcastManager.getInstance(cordova.getContext()).sendBroadcast(intent);
         appInForeground = true;
     }
 
@@ -160,7 +164,7 @@ public class FCMPlugin extends CordovaPlugin {
                     });
                     break;
                 case ACTION_GET_DELIVERED_NOTIFICATIONS:
-                    getDeliveredNoticiations(callbackContext);
+                    getDeliveredNotifications(callbackContext);
                 case ACTION_CLEAR_ALL_NOTIFICATIONS:
                     cordova.getThreadPool().execute(() -> {
                         try {
@@ -168,7 +172,7 @@ public class FCMPlugin extends CordovaPlugin {
                             NotificationManager nm = (NotificationManager) context
                                 .getSystemService(Context.NOTIFICATION_SERVICE);
                             nm.cancelAll();
-                            clearStoredNotifications(context);
+                            SharedPreferencesManager.getInstance(context).clearNotifications();
                             callbackContext.success();
                         } catch (Exception e) {
                             callbackContext.error(e.getMessage());
@@ -201,34 +205,16 @@ public class FCMPlugin extends CordovaPlugin {
         return true;
     }
 
-        private void getDeliveredNoticiations(CallbackContext callbackContext) {
-            try {
-                Context context = cordova.getActivity();
-                JSONObject notifications = new JSONObject();
-                SharedPreferences sharedPreferences = context.getSharedPreferences("PendingNotifications", Context.MODE_PRIVATE);
-                String notificationsString = sharedPreferences.getString("notifications", "");
-
-                if (!notificationsString.isEmpty()) {
-                    notifications = new JSONObject(notificationsString);
-                }
-
-                JSONArray notificationsArray = Utils.convertToJsonArray(notifications);
-
-                clearStoredNotifications(context);
-
-                JSONObject result = new JSONObject().put("notifications", notificationsArray);
-                callbackContext.success(result);
-
-            } catch (Exception e) {
-                callbackContext.error("Error fetching notifications: " + e.getMessage());
-            }
-    }
-
-    private static void clearStoredNotifications(Context context) {
-        SharedPreferences sharedPreferences = context.getSharedPreferences("PendingNotifications", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.remove("notifications");
-        editor.apply();
+    private void getDeliveredNotifications(CallbackContext callbackContext) {
+        JSONObject result = null;
+        try {
+            SharedPreferencesManager sharedPreferencesManager = SharedPreferencesManager.getInstance(cordova.getContext());
+            result = sharedPreferencesManager.getNotifications();
+            sharedPreferencesManager.clearNotifications();
+            callbackContext.success(result);
+        } catch (JSONException e) {
+            callbackContext.error("Error fetching notifications: " + e.getMessage());
+        }
     }
 
     public void getInitialPushPayload(CallbackContext callback) {

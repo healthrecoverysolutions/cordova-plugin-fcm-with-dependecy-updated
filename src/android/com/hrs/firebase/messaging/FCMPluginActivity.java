@@ -53,21 +53,11 @@ public class FCMPluginActivity extends Activity {
             notificationManager.cancel(notificationId);
         }
 
-        // get notifications from shared preferences and remove the notification that was tapped
-        JSONObject notifications = new JSONObject();
-        SharedPreferences sharedPreferences = getSharedPreferences("PendingNotifications", Context.MODE_PRIVATE);
-        String notificationsString = sharedPreferences.getString("notifications", "");
-        if (!notificationsString.isEmpty()) {
-            try {
-                notifications = new JSONObject(notificationsString);
-            } catch (JSONException e) {
-                Timber.e("Failed to parse notifications json string: %s", e.getMessage());
-            }
+        try {
+            SharedPreferencesManager.getInstance(this).removeNotification(String.valueOf(notificationId));
+        } catch (JSONException e) {
+            Timber.e("Error trying to remove notification from shared preferences: %s", e.getMessage());
         }
-        notifications.remove(String.valueOf(notificationId));
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString("notifications", notifications.toString());
-        editor.apply();
 
         Timber.d("==> USER TAPPED NOTIFICATION");
         Map<String, Object> data = Utils.bundleToHashMap((Bundle) Objects.requireNonNull(intentExtras.get("data")));
@@ -101,11 +91,15 @@ public class FCMPluginActivity extends Activity {
 
         // makes pcm answer the call
         data.put("wasTapped", wasTapped);
-
-       clearIncomingCall(intent);
-
+        clearIncomingCall(intent);
+        try {
+            SharedPreferencesManager.getInstance(this).removeNotification(String.valueOf(IncomingCallNotification.NOTIFICATION_ID));
+        } catch (JSONException e) {
+            Timber.e("Error removing notification from shared preferences: %s", e.getMessage());
+        }
         FCMPlugin.setInitialPushPayload(data);
         FCMPlugin.sendPushPayload(data);
+
         forceMainActivityReload();
     }
 

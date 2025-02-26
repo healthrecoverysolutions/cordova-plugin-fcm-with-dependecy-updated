@@ -4,11 +4,17 @@ import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.HashMap;
+
+import timber.log.Timber;
 
 public class DeclineCallReceiver extends BroadcastReceiver {
     @Override
@@ -29,6 +35,12 @@ public class DeclineCallReceiver extends BroadcastReceiver {
 
         Intent cancelIntent = new Intent(IncomingCallNotification.ACTION_CANCEL_DISMISSAL);
         LocalBroadcastManager.getInstance(context).sendBroadcast(cancelIntent);
+
+        try {
+            SharedPreferencesManager.getInstance(context).removeNotification(String.valueOf(IncomingCallNotification.NOTIFICATION_ID));
+        } catch (JSONException e) {
+            Timber.e("Error removing notification from shared preferences: %s", e.getMessage());
+        }
 
         FCMPlugin.sendCallDeclined(data);
     }

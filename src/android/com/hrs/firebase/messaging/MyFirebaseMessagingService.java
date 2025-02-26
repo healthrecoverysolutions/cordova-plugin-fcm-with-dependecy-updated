@@ -1,29 +1,25 @@
 package com.hrs.firebase.messaging;
 
-import android.app.KeyguardManager;
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.os.Build;
-import android.view.View;
+    import android.content.Context;
+    import android.content.Intent;
+    import android.content.pm.PackageManager;
+    import android.os.Build;
 
-import androidx.annotation.NonNull;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+    import androidx.annotation.NonNull;
+    import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.google.firebase.messaging.FirebaseMessagingService;
-import com.google.firebase.messaging.RemoteMessage;
+    import com.google.firebase.messaging.FirebaseMessagingService;
+    import com.google.firebase.messaging.RemoteMessage;
 
-import org.apache.cordova.CordovaWebView;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+    import org.apache.cordova.CordovaWebView;
+    import org.json.JSONException;
+    import org.json.JSONObject;
 
 
-import java.util.HashMap;
-import java.util.Objects;
+    import java.util.HashMap;
+    import java.util.Objects;
 
-import timber.log.Timber;
+    import timber.log.Timber;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
@@ -81,14 +77,19 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
             if (jsonData != null && jsonData.optString("action").equals("incoming_call")) {
                 handleIncomingCall(jsonData);
+                try {
+                    SharedPreferencesManager.getInstance(this).storeNotification(String.valueOf(IncomingCallNotification.NOTIFICATION_ID), jsonData);
+                } catch (JSONException e) {
+                    Timber.e("Error getting storing notification in shared preferences: %s", e.getMessage());
+                }
             } else if (jsonData != null && jsonData.optString("action").equals("call_left")) {
                 broadcastCallLeft(this);
             } else if (jsonData != null && !jsonData.optString("title").isEmpty()) {
                 handleGenericNotification(jsonData);
                 try {
-                    storeNotification(remoteMessage.getMessageId(), jsonData);
+                    SharedPreferencesManager.getInstance(this).storeNotification(remoteMessage.getMessageId(), jsonData);
                 } catch (JSONException e) {
-                   Timber.e("Failed to store background notification: %s", e.getMessage());
+                    Timber.e("Error getting storing notification in shared preferences: %s", e.getMessage());
                 }
             } else {
                 FCMPlugin.sendPushPayload(data);
@@ -96,21 +97,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         }
 
         Timber.d("	Notification Data: %s", data.toString());
-    }
-
-    private void storeNotification(String id, JSONObject jsonData) throws JSONException {
-        JSONObject notifications = new JSONObject();
-        SharedPreferences sharedPreferences = getSharedPreferences("PendingNotifications", Context.MODE_PRIVATE);
-        String notificationsString = sharedPreferences.getString("notifications", "");
-        if (!notificationsString.isEmpty()) {
-            notifications = new JSONObject(notificationsString);
-        }
-
-        notifications.put(String.valueOf(Utils.createNotificationId(id)), jsonData);
-
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString("notifications", notifications.toString());
-        editor.apply();
     }
 
     private void broadcastCallLeft(Context context) {

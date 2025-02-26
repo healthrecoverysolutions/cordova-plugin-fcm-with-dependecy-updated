@@ -10,6 +10,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
@@ -31,11 +32,9 @@ import timber.log.Timber;
 
 public class IncomingCallNotification {
     private static final String CHANNEL_ID = "incoming_call_notification_channel";
-    private static final int NOTIFICATION_ID = 1001;
-
+    public static final int NOTIFICATION_ID = 1001;
     public static final String ACTION_CANCEL_DISMISSAL = "CANCEL_DISMISSAL";
     private final Context context;
-
     private ScheduledExecutorService scheduler;
     private ScheduledFuture<?> scheduledFuture;
     private final NotificationManager notificationManager;
@@ -43,8 +42,18 @@ public class IncomingCallNotification {
     public IncomingCallNotification(Context context) {
         this.notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         this.context = context;
-        LocalBroadcastManager.getInstance(context).registerReceiver(this.cancelReceiver, new IntentFilter(ACTION_CANCEL_DISMISSAL));
+        LocalBroadcastManager.getInstance(context).registerReceiver(cancelReceiver, new IntentFilter(ACTION_CANCEL_DISMISSAL));
+        IntentFilter callLeftFilter = new IntentFilter("CALL_LEFT");
+        LocalBroadcastManager.getInstance(context).registerReceiver(finishReceiver, callLeftFilter);
     }
+
+    private final BroadcastReceiver finishReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            dismissNotification();
+            cancelScheduledDismissal();
+        }
+    };
 
     private final BroadcastReceiver cancelReceiver = new BroadcastReceiver() {
         @Override
@@ -165,15 +174,24 @@ public class IncomingCallNotification {
         }
 
         scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduledFuture = scheduler.schedule(() -> {
-            Timber.d("#scheduleDismissal(): Incoming call dismissal triggered");
-            this.notificationManager.cancel(NOTIFICATION_ID);
-            MyRingtoneManager.getInstance().stopRingtone();
-            Intent intent = new Intent("FINISH_INCOMING_CALL_ACTIVITY");
-            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-            scheduler.shutdown();
-            this.unregisterReceiver();
-        }, 90, TimeUnit.SECONDS);
+        scheduledFuture = scheduler.schedule(this::dismissNotification, 90, TimeUnit.SECONDS);
+    }
+
+    public void dismissNotification() {
+        Timber.d("#scheduleDismissal(): Incoming call dismissal triggered");
+        this.notificationManager.cancel(NOTIFICATION_ID);
+        MyRingtoneManager.getInstance().stopRingtone();
+        Intent intent = new Intent("FINISH_INCOMING_CALL_ACTIVITY");
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+        scheduler.shutdown();
+
+        try {
+            SharedPreferencesManager.getInstance(context).removeNotification(String.valueOf(IncomingCallNotification.NOTIFICATION_ID));
+        } catch (JSONException e) {
+            Timber.e("Error removing notification from shared preferences: %s", e.getMessage());
+        }
+
+        this.unregisterReceiver();
     }
 
     private void cancelScheduledDismissal() {
@@ -190,7 +208,8 @@ public class IncomingCallNotification {
 
     public void unregisterReceiver() {
         Timber.d("#unregisterReceiver(): unregister CANCEL_DISMISSAL incoming call receiver");
-        LocalBroadcastManager.getInstance(context).unregisterReceiver(this.cancelReceiver);
+        LocalBroadcastManager.getInstance(context).unregisterReceiver(cancelReceiver);
+        LocalBroadcastManager.getInstance(context).unregisterReceiver(finishReceiver);
     }
 }
 
