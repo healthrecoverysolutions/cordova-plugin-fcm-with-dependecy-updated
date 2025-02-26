@@ -1,7 +1,9 @@
 type ErrorCallback = (error: any) => void;
 export declare enum FirebaseMessagingEventType {
     NOTIFICATION = "notification",
-    TOKEN_REFRESH = "tokenRefresh"
+    TOKEN_REFRESH = "tokenRefresh",
+    CALL_DECLINED = "callDeclined",
+    CALL_MISSED = "callMissed"
 }
 export interface IChannelConfiguration {
     /**
@@ -156,6 +158,7 @@ export declare class FirebaseMessagingCordovaInterface {
      */
     unsubscribeFromTopic(topic: string): Promise<void>;
     initDifferentAccount(accountInfo: any): Promise<void>;
+    getDeliveredNotifications(): Promise<any>;
 }
 export declare const FirebaseMessaging: FirebaseMessagingCordovaInterface;
 export {};

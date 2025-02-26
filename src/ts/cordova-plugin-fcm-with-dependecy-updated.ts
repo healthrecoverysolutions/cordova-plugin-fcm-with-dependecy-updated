@@ -44,7 +44,9 @@ enum PlatformType {
 
 export enum FirebaseMessagingEventType {
     NOTIFICATION = 'notification',
-    TOKEN_REFRESH = 'tokenRefresh'
+    TOKEN_REFRESH = 'tokenRefresh',
+    CALL_DECLINED = 'callDeclined',
+    CALL_MISSED = 'callMissed'
 }
 
 export interface IChannelConfiguration {
@@ -138,7 +140,7 @@ export class FirebaseMessagingCordovaInterface {
     }
 
     private platformIs(type: PlatformType): boolean {
-        return window.cordova?.platformId === type;   
+        return window.cordova?.platformId === type;
     }
 
     public setSharedEventDelegate(callback: FirebaseMessagingEventCallback, error: ErrorCallback): void {
@@ -265,6 +267,10 @@ export class FirebaseMessagingCordovaInterface {
 
     public initDifferentAccount(accountInfo: any): Promise<void> {
         return invoke('initDifferentAccount', accountInfo);
+    }
+
+    public getDeliveredNotifications(): Promise<any> {
+        return invoke('getDeliveredNotifications');
     }
 }
 
