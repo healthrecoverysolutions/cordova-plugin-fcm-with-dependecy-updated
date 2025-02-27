@@ -78,7 +78,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             if (jsonData != null && jsonData.optString("action").equals("incoming_call")) {
                 handleIncomingCall(jsonData);
                 try {
-                    SharedPreferencesManager.getInstance(this).storeNotification(String.valueOf(IncomingCallNotification.NOTIFICATION_ID), jsonData);
+                    SharedPreferencesManager.getInstance(this).storeNotification(jsonData.getString("id"), jsonData);
                 } catch (JSONException e) {
                     Timber.e("Error getting storing notification in shared preferences: %s", e.getMessage());
                 }
@@ -87,7 +87,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             } else if (jsonData != null && !jsonData.optString("title").isEmpty()) {
                 handleGenericNotification(jsonData);
                 try {
-                    SharedPreferencesManager.getInstance(this).storeNotification(remoteMessage.getMessageId(), jsonData);
+                    SharedPreferencesManager.getInstance(this).storeNotification(jsonData.getString("id"), jsonData);
                 } catch (JSONException e) {
                     Timber.e("Error getting storing notification in shared preferences: %s", e.getMessage());
                 }

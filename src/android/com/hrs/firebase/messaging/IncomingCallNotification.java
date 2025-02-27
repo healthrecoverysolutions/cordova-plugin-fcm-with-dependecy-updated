@@ -1,6 +1,5 @@
 package com.hrs.firebase.messaging;
 
-import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -10,7 +9,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
@@ -129,7 +127,7 @@ public class IncomingCallNotification {
         Intent declineIntent = new Intent(context, DeclineCallReceiver.class);
         Bundle bundle = Utils.jsonToBundle(data);
         declineIntent.putExtra("data", bundle);
-        declineIntent.putExtra("notificationId", NOTIFICATION_ID);
+        declineIntent.putExtra("notificationId", Utils.createNotificationId(data.getString("id")));
         return PendingIntent.getBroadcast(
             context,
             1,
@@ -142,7 +140,7 @@ public class IncomingCallNotification {
         Intent answerIntent = new Intent(context, FCMPluginActivity.class);
         Bundle bundle = Utils.jsonToBundle(data);
         answerIntent.putExtra("data", bundle);
-        answerIntent.putExtra("notificationId", NOTIFICATION_ID);
+        answerIntent.putExtra("notificationId", Utils.createNotificationId(data.getString("id")));
         answerIntent.setAction("ANSWER_CALL");
         return PendingIntent.getActivity(
             context,
@@ -156,7 +154,7 @@ public class IncomingCallNotification {
         Intent fullScreenIntent = new Intent(context, IncomingCallActivity.class);
         Bundle bundle = Utils.jsonToBundle(data);
         fullScreenIntent.putExtra("data", bundle);
-        fullScreenIntent.putExtra("notificationId", NOTIFICATION_ID);
+        fullScreenIntent.putExtra("notificationId", Utils.createNotificationId(data.getString("id")));
         fullScreenIntent.putExtra("caller", caller);
         fullScreenIntent.putExtra("title", title);
         return PendingIntent.getActivity(
@@ -186,7 +184,10 @@ public class IncomingCallNotification {
         scheduler.shutdown();
 
         try {
-            SharedPreferencesManager.getInstance(context).removeNotification(String.valueOf(IncomingCallNotification.NOTIFICATION_ID));
+            int notificationId = intent.getIntExtra("id", -1);
+            if (notificationId != -1) {
+                SharedPreferencesManager.getInstance(context).removeNotification(notificationId);
+            }
         } catch (JSONException e) {
             Timber.e("Error removing notification from shared preferences: %s", e.getMessage());
         }

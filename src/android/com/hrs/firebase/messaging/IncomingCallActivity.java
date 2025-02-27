@@ -23,7 +23,7 @@ public class IncomingCallActivity extends AppCompatActivity {
 
         Intent incomingCallIntent = getIntent();
         Bundle data = incomingCallIntent.getBundleExtra("data");
-        int notificationId = incomingCallIntent.getIntExtra("notificationId", 0);
+        int notificationId = incomingCallIntent.getIntExtra("notificationId", -1);
         String caller = incomingCallIntent.getStringExtra("caller");
         String title = incomingCallIntent.getStringExtra("title");
 
@@ -90,13 +90,13 @@ public class IncomingCallActivity extends AppCompatActivity {
     };
 
     private void hideSystemUI() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             Objects.requireNonNull(getWindow().getInsetsController()).hide(android.view.WindowInsets.Type.statusBars() | android.view.WindowInsets.Type.navigationBars());
         }
     }
 
     private void showSystemUI() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             Objects.requireNonNull(getWindow().getInsetsController()).show(android.view.WindowInsets.Type.statusBars() | android.view.WindowInsets.Type.navigationBars());
         }
     }

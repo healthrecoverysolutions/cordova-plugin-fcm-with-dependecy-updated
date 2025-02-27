@@ -32,7 +32,7 @@ public class GenericNotification {
         int defaultIcon = appInfo.metaData.getInt("com.google.firebase.messaging.default_notification_icon", 0);
 
         Notification.Builder builder = null;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             builder = new Notification.Builder(context, CHANNEL_ID)
                 .setContentTitle(data.getString("title"))
                 .setContentText(data.getString("body"))

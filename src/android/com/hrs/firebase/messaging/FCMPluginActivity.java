@@ -49,12 +49,14 @@ public class FCMPluginActivity extends Activity {
         int notificationId = intentExtras.getInt("notificationId");
         NotificationManager notificationManager =
             (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        if (notificationManager != null) {
+        if (notificationManager != null && notificationId != -1) {
             notificationManager.cancel(notificationId);
         }
 
         try {
-            SharedPreferencesManager.getInstance(this).removeNotification(String.valueOf(notificationId));
+            if (notificationId != -1) {
+                SharedPreferencesManager.getInstance(this).removeNotification(notificationId);
+            }
         } catch (JSONException e) {
             Timber.e("Error trying to remove notification from shared preferences: %s", e.getMessage());
         }
@@ -93,7 +95,10 @@ public class FCMPluginActivity extends Activity {
         data.put("wasTapped", wasTapped);
         clearIncomingCall(intent);
         try {
-            SharedPreferencesManager.getInstance(this).removeNotification(String.valueOf(IncomingCallNotification.NOTIFICATION_ID));
+            int notificationId = intent.getIntExtra("notificationId", -1);
+            if (notificationId != -1) {
+                SharedPreferencesManager.getInstance(this).removeNotification(notificationId);
+            }
         } catch (JSONException e) {
             Timber.e("Error removing notification from shared preferences: %s", e.getMessage());
         }

@@ -26,18 +26,18 @@ public class DeclineCallReceiver extends BroadcastReceiver {
         }
 
         MyRingtoneManager.getInstance().stopRingtone();
-        int notificationId = intent.getIntExtra("notificationId", -1);
         NotificationManager notificationManager =
-            (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        if (notificationManager != null && notificationId != -1) {
-            notificationManager.cancel(notificationId);
-        }
+        (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(IncomingCallNotification.NOTIFICATION_ID);
 
         Intent cancelIntent = new Intent(IncomingCallNotification.ACTION_CANCEL_DISMISSAL);
         LocalBroadcastManager.getInstance(context).sendBroadcast(cancelIntent);
 
         try {
-            SharedPreferencesManager.getInstance(context).removeNotification(String.valueOf(IncomingCallNotification.NOTIFICATION_ID));
+            int notificationId = intent.getIntExtra("notificationId", -1);
+            if (notificationId != -1) {
+                SharedPreferencesManager.getInstance(context).removeNotification(notificationId);
+            }
         } catch (JSONException e) {
             Timber.e("Error removing notification from shared preferences: %s", e.getMessage());
         }

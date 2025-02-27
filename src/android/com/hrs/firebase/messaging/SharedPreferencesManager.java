@@ -26,6 +26,11 @@ public class SharedPreferencesManager {
         return instance;
     }
 
+
+    public void removeNotification(int notificationId) {
+        String id = String.valueOf(notificationId);
+        removeNotification(id);
+    }
     public void removeNotification(String notificationId) {
         try {
             String notificationsString = sharedPreferences.getString(KEY_NOTIFICATIONS, "");
