@@ -24,7 +24,6 @@ package com.hrs.firebase.messaging;
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     public static CordovaWebView webView = null;
-
     @Override
     public void onNewToken(@NonNull String token) {
         super.onNewToken(token);
@@ -76,9 +75,10 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             }
 
             if (jsonData != null && jsonData.optString("action").equals("incoming_call")) {
-                handleIncomingCall(jsonData);
                 try {
-                    SharedPreferencesManager.getInstance(this).storeNotification(jsonData.getString("id"), jsonData);
+                    String notificationId = jsonData.getString("id");
+                    handleIncomingCall(jsonData, Utils.createNotificationId(notificationId));
+                    SharedPreferencesManager.getInstance(this).storeNotification(notificationId, jsonData);
                 } catch (JSONException e) {
                     Timber.e("Error getting storing notification in shared preferences: %s", e.getMessage());
                 }
@@ -115,7 +115,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     }
 
 
-    private void handleIncomingCall(JSONObject jsonData) {
+    private void handleIncomingCall(JSONObject jsonData, int notificationId) {
         String name = "";
         if (jsonData.optString("type").equals("video") || jsonData.optString("type").equals("video-zoom")) {
             JSONObject caller = jsonData.optJSONObject("caller");
@@ -130,7 +130,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         }
 
         try {
-            new IncomingCallNotification(this).show(jsonData, name);
+            new IncomingCallNotification(this, notificationId).show(jsonData, name);
         } catch (JSONException e) {
             Timber.e("Failed to generate incoming call notification  %s", e.getMessage());
         }

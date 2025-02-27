@@ -36,10 +36,12 @@ public class IncomingCallNotification {
     private ScheduledExecutorService scheduler;
     private ScheduledFuture<?> scheduledFuture;
     private final NotificationManager notificationManager;
+    private int notificationId;
 
-    public IncomingCallNotification(Context context) {
+    public IncomingCallNotification(Context context, int notificationId ) {
         this.notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         this.context = context;
+        this.notificationId = notificationId;
         LocalBroadcastManager.getInstance(context).registerReceiver(cancelReceiver, new IntentFilter(ACTION_CANCEL_DISMISSAL));
         IntentFilter callLeftFilter = new IntentFilter("CALL_LEFT");
         LocalBroadcastManager.getInstance(context).registerReceiver(finishReceiver, callLeftFilter);
@@ -127,7 +129,7 @@ public class IncomingCallNotification {
         Intent declineIntent = new Intent(context, DeclineCallReceiver.class);
         Bundle bundle = Utils.jsonToBundle(data);
         declineIntent.putExtra("data", bundle);
-        declineIntent.putExtra("notificationId", Utils.createNotificationId(data.getString("id")));
+        declineIntent.putExtra("notificationId", notificationId);
         return PendingIntent.getBroadcast(
             context,
             1,
@@ -140,7 +142,7 @@ public class IncomingCallNotification {
         Intent answerIntent = new Intent(context, FCMPluginActivity.class);
         Bundle bundle = Utils.jsonToBundle(data);
         answerIntent.putExtra("data", bundle);
-        answerIntent.putExtra("notificationId", Utils.createNotificationId(data.getString("id")));
+        answerIntent.putExtra("notificationId", notificationId);
         answerIntent.setAction("ANSWER_CALL");
         return PendingIntent.getActivity(
             context,
@@ -154,7 +156,7 @@ public class IncomingCallNotification {
         Intent fullScreenIntent = new Intent(context, IncomingCallActivity.class);
         Bundle bundle = Utils.jsonToBundle(data);
         fullScreenIntent.putExtra("data", bundle);
-        fullScreenIntent.putExtra("notificationId", Utils.createNotificationId(data.getString("id")));
+        fullScreenIntent.putExtra("notificationId", notificationId);
         fullScreenIntent.putExtra("caller", caller);
         fullScreenIntent.putExtra("title", title);
         return PendingIntent.getActivity(
@@ -175,6 +177,7 @@ public class IncomingCallNotification {
         scheduledFuture = scheduler.schedule(this::dismissNotification, 90, TimeUnit.SECONDS);
     }
 
+
     public void dismissNotification() {
         Timber.d("#scheduleDismissal(): Incoming call dismissal triggered");
         this.notificationManager.cancel(NOTIFICATION_ID);
@@ -184,10 +187,7 @@ public class IncomingCallNotification {
         scheduler.shutdown();
 
         try {
-            int notificationId = intent.getIntExtra("id", -1);
-            if (notificationId != -1) {
-                SharedPreferencesManager.getInstance(context).removeNotification(notificationId);
-            }
+            SharedPreferencesManager.getInstance(context).removeNotification(notificationId);
         } catch (JSONException e) {
             Timber.e("Error removing notification from shared preferences: %s", e.getMessage());
         }
