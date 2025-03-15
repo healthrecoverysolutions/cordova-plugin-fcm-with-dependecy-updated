@@ -94,18 +94,8 @@ public class FCMPluginActivity extends Activity {
         // makes pcm answer the call
         data.put("wasTapped", wasTapped);
         clearIncomingCall(intent);
-        try {
-            int notificationId = intent.getIntExtra("notificationId", -1);
-            if (notificationId != -1) {
-                SharedPreferencesManager.getInstance(this).removeNotification(notificationId);
-            }
-        } catch (JSONException e) {
-            Timber.e("Error removing notification from shared preferences: %s", e.getMessage());
-        }
         FCMPlugin.setInitialPushPayload(data);
         FCMPlugin.sendPushPayload(data);
-
-        forceMainActivityReload();
     }
 
     private void clearIncomingCall(Intent intent) {

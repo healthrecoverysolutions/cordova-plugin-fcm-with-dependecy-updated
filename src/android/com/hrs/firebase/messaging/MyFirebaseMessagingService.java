@@ -75,13 +75,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             }
 
             if (jsonData != null && jsonData.optString("action").equals("incoming_call")) {
-                try {
-                    String notificationId = jsonData.getString("id");
-                    handleIncomingCall(jsonData, Utils.createNotificationId(notificationId));
-                    SharedPreferencesManager.getInstance(this).storeNotification(notificationId, jsonData);
-                } catch (JSONException e) {
-                    Timber.e("Error getting storing notification in shared preferences: %s", e.getMessage());
-                }
+                handleIncomingCall(jsonData, Utils.createNotificationId(notificationId));
             } else if (jsonData != null && jsonData.optString("action").equals("call_left")) {
                 broadcastCallLeft(this);
             } else if (jsonData != null && !jsonData.optString("title").isEmpty()) {
