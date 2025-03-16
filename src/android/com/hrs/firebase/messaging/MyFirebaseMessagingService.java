@@ -75,7 +75,11 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             }
 
             if (jsonData != null && jsonData.optString("action").equals("incoming_call")) {
-                handleIncomingCall(jsonData, Utils.createNotificationId(jsonData.getString("id")));
+                try {
+                    handleIncomingCall(jsonData, Utils.createNotificationId(jsonData.getString("id")));
+                } catch (JSONException e) {
+                    Timber.e("Error handling incoming call: %s", e.getMessage());
+                }
             } else if (jsonData != null && jsonData.optString("action").equals("call_left")) {
                 broadcastCallLeft(this);
             } else if (jsonData != null && !jsonData.optString("title").isEmpty()) {
