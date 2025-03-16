@@ -85,6 +85,15 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 } catch (JSONException e) {
                     Timber.e("Error getting storing notification in shared preferences: %s", e.getMessage());
                 }
+
+                if (jsonData.optString("status").equals("deactivate")) {
+                    Timber.d("Incoming deactivate patient notification. Deleting token.");
+                    try {
+                        FirebaseMessaging.getInstance().deleteToken();
+                    } catch (Exception e) {
+                        Timber.e("Patient deactivated. Error deleting Firebase instance: %s", e.getMessage());
+                    }
+                }
             } else {
                 FCMPlugin.sendPushPayload(data);
             }
