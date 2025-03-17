@@ -184,7 +184,9 @@ public class IncomingCallNotification {
         MyRingtoneManager.getInstance().stopRingtone();
         Intent intent = new Intent("FINISH_INCOMING_CALL_ACTIVITY");
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-        scheduler.shutdown();
+        if (scheduler != null && !scheduler.isShutdown()) {
+            scheduler.shutdown();
+        }
 
         try {
             SharedPreferencesManager.getInstance(context).removeNotification(notificationId);
