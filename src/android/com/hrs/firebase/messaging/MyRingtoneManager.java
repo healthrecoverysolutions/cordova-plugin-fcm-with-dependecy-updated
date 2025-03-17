@@ -15,8 +15,7 @@ public class MyRingtoneManager {
 
     private MyRingtoneManager() {
         // Private constructor to enforce singleton
-        Looper.prepare();
-        handler = new Handler();
+        handler = new Handler(Looper.getMainLooper());
     }
 
     public static MyRingtoneManager getInstance() {
