@@ -11,6 +11,7 @@ package com.hrs.firebase.messaging;
     import com.google.firebase.messaging.FirebaseMessaging;
     import com.google.firebase.messaging.FirebaseMessagingService;
     import com.google.firebase.messaging.RemoteMessage;
+    import com.hrs.knox.KnoxPlugin;
 
     import org.apache.cordova.CordovaWebView;
     import org.json.JSONException;
@@ -83,6 +84,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 }
             } else if (jsonData != null && jsonData.optString("action").equals("call_left")) {
                 broadcastCallLeft(this);
+                FCMPlugin.sendPushPayload(data);
             } else if (jsonData != null && !jsonData.optString("title").isEmpty()) {
                 handleGenericNotification(jsonData);
                 try {

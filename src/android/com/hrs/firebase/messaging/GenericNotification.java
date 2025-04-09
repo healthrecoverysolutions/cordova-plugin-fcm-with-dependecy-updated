@@ -9,6 +9,8 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -31,6 +33,7 @@ public class GenericNotification {
         ApplicationInfo appInfo = context.getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
         int defaultIcon = appInfo.metaData.getInt("com.google.firebase.messaging.default_notification_icon", 0);
 
+
         Notification.Builder builder = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             builder = new Notification.Builder(context, CHANNEL_ID)
@@ -51,6 +54,8 @@ public class GenericNotification {
                 NotificationManager.IMPORTANCE_HIGH
             );
             channel.setDescription("Notifications for incoming calls");
+            Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            channel.setSound(defaultSoundUri, Notification.AUDIO_ATTRIBUTES_DEFAULT);
             notificationManager.createNotificationChannel(channel);
         }
     }
