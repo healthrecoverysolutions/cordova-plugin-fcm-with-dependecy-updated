@@ -61,6 +61,7 @@ public class FCMPlugin extends CordovaPlugin {
     private CallbackContext sharedEventDelegate = null;
 
     public static boolean appInForeground = false;
+    public static boolean isKnoxManage = false;
 
     @Override
     public void pluginInitialize() {

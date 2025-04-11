@@ -66,7 +66,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             data.put(key, value);
         }
 
-        if (FCMPlugin.appInForeground || Build.VERSION.SDK_INT <= Build.VERSION_CODES.S) {
+        if (FCMPlugin.appInForeground || Build.VERSION.SDK_INT <= Build.VERSION_CODES.S || !FCMPlugin.isKnoxManage) {
             FCMPlugin.sendPushPayload(data);
         } else {
             JSONObject jsonData = null;
