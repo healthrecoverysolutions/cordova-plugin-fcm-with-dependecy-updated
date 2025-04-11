@@ -172,6 +172,9 @@ var FirebaseMessagingCordovaInterface = /** @class */ (function () {
     FirebaseMessagingCordovaInterface.prototype.getDeliveredNotifications = function () {
         return invoke('getDeliveredNotifications');
     };
+    FirebaseMessagingCordovaInterface.prototype.setIsKnoxManage = function (isKnoxManage) {
+        return invoke('setIsKnoxManage', isKnoxManage);
+    };
     return FirebaseMessagingCordovaInterface;
 }());
 exports.FirebaseMessagingCordovaInterface = FirebaseMessagingCordovaInterface;

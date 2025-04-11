@@ -272,6 +272,10 @@ export class FirebaseMessagingCordovaInterface {
     public getDeliveredNotifications(): Promise<any> {
         return invoke('getDeliveredNotifications');
     }
+
+    public setIsKnoxManage(isKnoxManage: boolean): Promise<any> {
+        return invoke('setIsKnoxManage', isKnoxManage);
+    }
 }
 
 export const FirebaseMessaging = new FirebaseMessagingCordovaInterface();
