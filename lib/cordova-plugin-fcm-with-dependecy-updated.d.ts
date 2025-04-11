@@ -159,7 +159,6 @@ export declare class FirebaseMessagingCordovaInterface {
     unsubscribeFromTopic(topic: string): Promise<void>;
     initDifferentAccount(accountInfo: any): Promise<void>;
     getDeliveredNotifications(): Promise<any>;
-    setIsKnoxManage(isKnoxManage: boolean): Promise<any>;
 }
 export declare const FirebaseMessaging: FirebaseMessagingCordovaInterface;
 export {};

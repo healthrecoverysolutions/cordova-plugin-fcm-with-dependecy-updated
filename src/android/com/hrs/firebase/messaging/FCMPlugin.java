@@ -44,7 +44,6 @@ public class FCMPlugin extends CordovaPlugin {
     private static final String ACTION_DELETE_INSTANCE_ID = "deleteInstanceId";
     private static final String ACTION_HAS_PERMISSION = "hasPermission";
     private static final String ACTION_GET_DELIVERED_NOTIFICATIONS = "getDeliveredNotifications";
-    private static final String ACTION_SET_IS_KNOX_MANAGE = "setIsKnoxManage";
 
     private static final String EVENT_TYPE_NOTIFICATION = "notification";
     private static final String EVENT_TYPE_TOKEN_REFRESH = "tokenRefresh";
@@ -61,7 +60,6 @@ public class FCMPlugin extends CordovaPlugin {
     private CallbackContext sharedEventDelegate = null;
 
     public static boolean appInForeground = false;
-    public static boolean isKnoxManage = false;
 
     @Override
     public void pluginInitialize() {
@@ -113,10 +111,6 @@ public class FCMPlugin extends CordovaPlugin {
                 case ACTION_SET_SHARED_EVENT_DELEGATE:
                     Timber.i("overridding event bridge");
                     sharedEventDelegate = callbackContext;
-                    break;
-                case ACTION_SET_IS_KNOX_MANAGE:
-                    Timber.i("setting is knox manage");
-                    isKnoxManage = args.getBoolean(0);
                     break;
                 case ACTION_GET_TOKEN:
                     cordova.getActivity().runOnUiThread(() -> getToken(callbackContext));
