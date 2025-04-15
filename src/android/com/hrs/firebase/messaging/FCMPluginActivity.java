@@ -94,7 +94,6 @@ public class FCMPluginActivity extends Activity {
         // makes pcm answer the call
         data.put("wasTapped", wasTapped);
         clearIncomingCall(intent);
-        FCMPlugin.setInitialPushPayload(data);
         FCMPlugin.sendPushPayload(data);
     }
 
