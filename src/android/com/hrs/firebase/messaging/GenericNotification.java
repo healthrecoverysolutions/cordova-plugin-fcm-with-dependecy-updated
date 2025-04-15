@@ -1,5 +1,9 @@
 package com.hrs.firebase.messaging;
 
+import static android.content.Context.POWER_SERVICE;
+import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.LOLLIPOP;
+
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -13,6 +17,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -44,6 +49,7 @@ public class GenericNotification {
         }
 
         notificationManager.notify(notificationId, builder != null ? builder.build() : null);
+        wakeUp(context);
     }
 
     private void createNotificationChannel(NotificationManager notificationManager) {
@@ -54,6 +60,7 @@ public class GenericNotification {
                 NotificationManager.IMPORTANCE_HIGH
             );
             channel.setDescription("Notifications for incoming calls");
+            channel.enableLights(true);
             Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
             channel.setSound(defaultSoundUri, Notification.AUDIO_ATTRIBUTES_DEFAULT);
             notificationManager.createNotificationChannel(channel);
@@ -71,6 +78,28 @@ public class GenericNotification {
             intent,
             PendingIntent.FLAG_IMMUTABLE
         );
+    }
+
+    /**
+     * Wakeup the device.
+     *
+     * @param context The application context.
+     */
+    private void wakeUp(Context context) {
+        PowerManager pm = (PowerManager) context.getSystemService(POWER_SERVICE);
+
+        if (pm == null)
+            return;
+
+        int level =   PowerManager.SCREEN_DIM_WAKE_LOCK
+            | PowerManager.ACQUIRE_CAUSES_WAKEUP;
+
+        PowerManager.WakeLock wakeLock = pm.newWakeLock(level, "com.hrs.patient:FirebaseMessage");
+
+        wakeLock.setReferenceCounted(false);
+        wakeLock.acquire(1000);
+
+        wakeLock.release();
     }
 }
 

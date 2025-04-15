@@ -11,7 +11,7 @@ package com.hrs.firebase.messaging;
     import com.google.firebase.messaging.FirebaseMessaging;
     import com.google.firebase.messaging.FirebaseMessagingService;
     import com.google.firebase.messaging.RemoteMessage;
-    import com.hrs.knox.KnoxPlugin;
+    import com.hrs.patient.BuildConfig;
 
     import org.apache.cordova.CordovaWebView;
     import org.json.JSONException;
@@ -66,7 +66,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             data.put(key, value);
         }
 
-        if (FCMPlugin.appInForeground || Build.VERSION.SDK_INT <= Build.VERSION_CODES.S) {
+        boolean isKnoxManage = BuildConfig.KNOXMANAGE;
+        if (FCMPlugin.appInForeground || Build.VERSION.SDK_INT <= Build.VERSION_CODES.S || !isKnoxManage) {
             FCMPlugin.sendPushPayload(data);
         } else {
             JSONObject jsonData = null;

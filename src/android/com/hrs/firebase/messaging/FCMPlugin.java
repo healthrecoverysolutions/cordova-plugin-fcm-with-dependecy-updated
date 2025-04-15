@@ -227,6 +227,7 @@ public class FCMPlugin extends CordovaPlugin {
         try {
             JSONObject jo = Utils.hashMapToJSONObject((HashMap<String, Object>) initialPushPayload);
             callback.success(jo);
+            initialPushPayload = null;
         } catch (Exception error) {
             try {
                 callback.error(exceptionToJson(error));
