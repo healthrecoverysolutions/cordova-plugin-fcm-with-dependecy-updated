@@ -1,27 +1,28 @@
 package com.hrs.firebase.messaging;
 
-    import android.content.Context;
-    import android.content.Intent;
-    import android.content.pm.PackageManager;
-    import android.os.Build;
+import static org.apache.cordova.BuildHelper.getBuildConfigValue;
 
-    import androidx.annotation.NonNull;
-    import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 
-    import com.google.firebase.messaging.FirebaseMessaging;
-    import com.google.firebase.messaging.FirebaseMessagingService;
-    import com.google.firebase.messaging.RemoteMessage;
-    import com.hrs.patient.BuildConfig;
+import androidx.annotation.NonNull;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-    import org.apache.cordova.CordovaWebView;
-    import org.json.JSONException;
-    import org.json.JSONObject;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingService;
+import com.google.firebase.messaging.RemoteMessage;
+
+import org.apache.cordova.CordovaWebView;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 
-    import java.util.HashMap;
-    import java.util.Objects;
+import java.util.HashMap;
+import java.util.Objects;
 
-    import timber.log.Timber;
+import timber.log.Timber;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
@@ -66,8 +67,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             data.put(key, value);
         }
 
-        boolean isKnoxManage = BuildConfig.KNOXMANAGE;
-        if (FCMPlugin.appInForeground || Build.VERSION.SDK_INT <= Build.VERSION_CODES.S || !isKnoxManage) {
+        Boolean isKnoxManage = (Boolean) getBuildConfigValue(getApplicationContext(), "KNOXMANAGE");
+        if (FCMPlugin.appInForeground || Build.VERSION.SDK_INT <= Build.VERSION_CODES.S || Boolean.FALSE.equals(isKnoxManage)) {
             FCMPlugin.sendPushPayload(data);
         } else {
             JSONObject jsonData = null;
