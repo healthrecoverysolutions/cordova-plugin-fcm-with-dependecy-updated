@@ -36,6 +36,7 @@ public class FCMPlugin extends CordovaPlugin {
     private static final String ACTION_SET_SHARED_EVENT_DELEGATE = "setSharedEventDelegate";
     private static final String ACTION_GET_TOKEN = "getToken";
     private static final String ACTION_GET_INITIAL_PUSH_PAYLOAD = "getInitialPushPayload";
+    private static final String ACTION_CLEAR_INITIAL_PUSH_PAYLOAD = "clearInitialPushPayload";
     private static final String ACTION_SUBSCRIBE_TO_TOPIC = "subscribeToTopic";
     private static final String ACTION_UNSUBSCRIBE_FROM_TOPIC = "unsubscribeFromTopic";
     private static final String ACTION_INIT_DIFFERENT_ACCOUNT = "initDifferentAccount";
@@ -117,6 +118,9 @@ public class FCMPlugin extends CordovaPlugin {
                     break;
                 case ACTION_GET_INITIAL_PUSH_PAYLOAD:
                     cordova.getActivity().runOnUiThread(() -> getInitialPushPayload(callbackContext));
+                    break;
+                case ACTION_CLEAR_INITIAL_PUSH_PAYLOAD:
+                    cordova.getActivity().runOnUiThread(() -> clearInitialPushPayload(callbackContext));
                     break;
                 case ACTION_SUBSCRIBE_TO_TOPIC:
                     cordova.getThreadPool().execute(() -> {
@@ -203,6 +207,11 @@ public class FCMPlugin extends CordovaPlugin {
         }
 
         return true;
+    }
+
+    private void clearInitialPushPayload(CallbackContext callbackContext) {
+        initialPushPayload = null;
+        callbackContext.success();
     }
 
     private void getDeliveredNotifications(CallbackContext callbackContext) {

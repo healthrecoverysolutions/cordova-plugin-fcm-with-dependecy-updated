@@ -120,6 +120,14 @@ export declare class FirebaseMessagingCordovaInterface {
      */
     getInitialPushPayload(): Promise<INotificationPayload | null>;
     /**
+     * Clears the message that, on tap, opened the app
+     *
+     * @private
+     *
+     * @returns {Promise<INotificationPayload | null>} Async call to native implementation
+     */
+    clearInitialPushPayload(): Promise<INotificationPayload | null>;
+    /**
      * Gets device's current registration id
      *
      * @returns {Promise<string>} Returns a Promise that resolves with the registration id token

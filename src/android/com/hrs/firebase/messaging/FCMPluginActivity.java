@@ -95,6 +95,7 @@ public class FCMPluginActivity extends Activity {
         data.put("wasTapped", wasTapped);
         clearIncomingCall(intent);
         FCMPlugin.sendPushPayload(data);
+        FCMPlugin.setInitialPushPayload(data);
     }
 
     private void clearIncomingCall(Intent intent) {
