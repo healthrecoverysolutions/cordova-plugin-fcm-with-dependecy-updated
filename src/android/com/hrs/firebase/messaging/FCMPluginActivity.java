@@ -8,6 +8,8 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
+import com.hrs.patient.BuildConfig;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -62,7 +64,17 @@ public class FCMPluginActivity extends Activity {
         }
 
         Timber.d("==> USER TAPPED NOTIFICATION");
-        Map<String, Object> data = Utils.bundleToHashMap((Bundle) Objects.requireNonNull(intentExtras.get("data")));
+        Map<String, Object> data;
+        if (BuildConfig.KNOXMANAGE) {
+            data = Utils.bundleToHashMap((Bundle) Objects.requireNonNull(intentExtras.get("data")));
+        } else {
+            data = new HashMap<String, Object>();
+            for (String key : intentExtras.keySet()) {
+                Object value = intentExtras.get(key);
+                Timber.d("\tKey: " + key + " Value: " + value);
+                data.put(key, value);
+            }
+        }
         data.put("wasTapped", true);
         FCMPlugin.setInitialPushPayload(data);
         FCMPlugin.sendPushPayload(data);
@@ -79,8 +91,10 @@ public class FCMPluginActivity extends Activity {
         Intent launchIntent = pm.getLaunchIntentForPackage(getApplicationContext().getPackageName());
         if (launchIntent != null) {
             // Set flag to bring the activity to the front instead of starting a new one
+            Bundle options = new Bundle();
+            options.putInt("android.activity.splashScreenStyle", 1);
             launchIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            startActivity(launchIntent);
+            startActivity(launchIntent, options);
         }
     }
 
