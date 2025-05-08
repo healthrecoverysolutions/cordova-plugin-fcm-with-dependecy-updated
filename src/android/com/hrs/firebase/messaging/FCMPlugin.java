@@ -68,6 +68,10 @@ public class FCMPlugin extends CordovaPlugin {
         this.setupPlugin();
     }
 
+    public static FCMPlugin getInstance() {
+        return instance;
+    }
+
     public void setupPlugin() {
         instance = this;
         Timber.d("==> FCMPlugin initialize");

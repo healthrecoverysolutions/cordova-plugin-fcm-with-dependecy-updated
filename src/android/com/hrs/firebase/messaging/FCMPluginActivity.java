@@ -109,9 +109,14 @@ public class FCMPluginActivity extends Activity {
         data.put("wasTapped", wasTapped);
         clearIncomingCall(intent);
         FCMPlugin.sendPushPayload(data);
-        FCMPlugin.setInitialPushPayload(data);
-    }
 
+        Timber.d("FCMPlugin.getInstance().cordova.getActivity() " + FCMPlugin.getInstance());
+        if (FCMPlugin.getInstance() == null) { // app isnt running yet
+            Timber.d("Set initialPushPayload when the app isnt running");
+            FCMPlugin.setInitialPushPayload(data);
+        }
+    }
+    
     private void clearIncomingCall(Intent intent) {
         MyRingtoneManager.getInstance().stopRingtone();
         int notificationId = intent.getIntExtra("notificationId", -1);
