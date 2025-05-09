@@ -1,17 +1,16 @@
 package com.hrs.firebase.messaging;
 
+import static org.apache.cordova.BuildHelper.getBuildConfigValue;
+
 import android.app.Activity;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
-import com.hrs.patient.BuildConfig;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -65,7 +64,8 @@ public class FCMPluginActivity extends Activity {
 
         Timber.d("==> USER TAPPED NOTIFICATION");
         Map<String, Object> data;
-        if (BuildConfig.KNOXMANAGE) {
+        Boolean isKnoxManage = (Boolean) getBuildConfigValue(getApplicationContext(), "KNOXMANAGE");
+        if (Boolean.TRUE.equals(isKnoxManage)) {
             data = Utils.bundleToHashMap((Bundle) Objects.requireNonNull(intentExtras.get("data")));
         } else {
             data = new HashMap<String, Object>();
@@ -116,7 +116,7 @@ public class FCMPluginActivity extends Activity {
             FCMPlugin.setInitialPushPayload(data);
         }
     }
-    
+
     private void clearIncomingCall(Intent intent) {
         MyRingtoneManager.getInstance().stopRingtone();
         int notificationId = intent.getIntExtra("notificationId", -1);
