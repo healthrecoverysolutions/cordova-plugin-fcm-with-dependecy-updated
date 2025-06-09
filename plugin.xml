@@ -77,11 +77,9 @@
 		<source-file src="src/android/com/hrs/firebase/messaging/FCMPluginChannelCreator.java" target-dir="src/com/hrs/firebase/messaging" />
 		<source-file src="src/android/com/hrs/firebase/messaging/MyFirebaseMessagingService.java" target-dir="src/com/hrs/firebase/messaging" />
 		<source-file src="src/android/com/hrs/firebase/messaging/FCMPluginActivity.java" target-dir="src/com/hrs/firebase/messaging" />
-		<source-file src="src/android/com/hrs/firebase/messaging/DeclineCallReceiver.java" target-dir="src/com/hrs/firebase/messaging" />
 		<source-file src="src/android/com/hrs/firebase/messaging/GenericNotification.java" target-dir="src/com/hrs/firebase/messaging" />
-		<source-file src="src/android/com/hrs/firebase/messaging/IncomingCallActivity.java" target-dir="src/com/hrs/firebase/messaging" />
-		<source-file src="src/android/com/hrs/firebase/messaging/IncomingCallNotification.java" target-dir="src/com/hrs/firebase/messaging" />
-		<source-file src="src/android/com/hrs/firebase/messaging/MyRingtoneManager.java" target-dir="src/com/hrs/firebase/messaging" />
+		<source-file src="src/android/com/hrs/firebase/messaging/incomingcall/IncomingCallActivity.java" target-dir="src/com/hrs/firebase/messaging" />
+		<source-file src="src/android/com/hrs/firebase/messaging//incomingcall/IncomingCallActivity.java" target-dir="src/com/hrs/firebase/messaging" />
 		<source-file src="src/android/com/hrs/firebase/messaging/Utils.java" target-dir="src/com/hrs/firebase/messaging" />
 		<source-file src="src/android/com/hrs/firebase/messaging/SharedPreferencesManager.java" target-dir="src/com/hrs/firebase/messaging" />
 		<source-file src="src/android/com/hrs/firebase/messaging/interfaces/OnFinishedListener.java" target-dir="src/com/hrs/firebase/messaging/interfaces" />
