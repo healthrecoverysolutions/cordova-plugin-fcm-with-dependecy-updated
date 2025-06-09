@@ -3,15 +3,15 @@ package com.hrs.firebase.messaging;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import android.app.Notification;
 import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.content.IntentFilter;
 import android.os.Bundle;
-import android.service.notification.StatusBarNotification;
 import android.util.Pair;
 
+import com.hrs.firebase.messaging.incomingcall.Constants;
 import com.hrs.firebase.messaging.interfaces.*;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.FirebaseApp;
@@ -62,10 +62,26 @@ public class FCMPlugin extends CordovaPlugin {
 
     public static boolean appInForeground = false;
 
+    private final BroadcastReceiver callEventReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (Constants.ACTION_ANSWER_CALL.equals(intent.getAction())) {
+                Intent answerIntent = new Intent(context, FCMPluginActivity.class);
+                answerIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                Bundle data = intent.getBundleExtra(Constants.EXTRA_CALL_DATA);
+                answerIntent.putExtra("data", data);
+
+                context.startActivity(answerIntent);
+            }
+        }
+    };
+
     @Override
     public void pluginInitialize() {
         super.pluginInitialize();
         this.setupPlugin();
+        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(cordova.getContext());
+        lbm.registerReceiver(callEventReceiver, new IntentFilter(Constants.ACTION_ANSWER_CALL));
     }
 
     public static FCMPlugin getInstance() {
@@ -78,6 +94,7 @@ public class FCMPlugin extends CordovaPlugin {
         FirebaseMessaging.getInstance().subscribeToTopic("android");
         FirebaseMessaging.getInstance().subscribeToTopic("all");
     }
+
 
     @Override
     public void onResume(boolean multitasking) {
@@ -100,6 +117,8 @@ public class FCMPlugin extends CordovaPlugin {
             Timber.d("onDestroy clearing static instance");
             instance = null;
             initialPushPayload = null;
+            LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(cordova.getContext());
+            lbm.unregisterReceiver(callEventReceiver);
         } else {
             Timber.d("onDestroy Not clearing static instance");
         }
