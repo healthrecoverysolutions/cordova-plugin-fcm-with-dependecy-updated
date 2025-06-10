@@ -10,6 +10,8 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 
 
+import com.hrs.firebase.messaging.incomingcall.Constants;
+
 import org.json.JSONException;
 
 import java.util.HashMap;
@@ -31,7 +33,7 @@ public class FCMPluginActivity extends Activity {
         Timber.d("==> FCMPluginActivity onCreate");
         Intent intent = getIntent();
         String action = intent.getAction();
-        if (action != null && action.equals("ANSWER_CALL")) {
+        if (action != null && action.equals(Constants.ACTION_ANSWER_CALL)) {
             this.openCall(intent, true);
         } else {
             this.sendPushPayload();
@@ -107,7 +109,6 @@ public class FCMPluginActivity extends Activity {
 
         // makes pcm answer the call
         data.put("wasTapped", wasTapped);
-        clearIncomingCall(intent);
         FCMPlugin.sendPushPayload(data);
 
         Timber.d("FCMPlugin.getInstance().cordova.getActivity() " + FCMPlugin.getInstance());
@@ -118,7 +119,6 @@ public class FCMPluginActivity extends Activity {
     }
 
     private void clearIncomingCall(Intent intent) {
-        MyRingtoneManager.getInstance().stopRingtone();
         int notificationId = intent.getIntExtra("notificationId", -1);
         NotificationManager notificationManager =
             (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
