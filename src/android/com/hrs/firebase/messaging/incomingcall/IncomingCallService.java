@@ -104,7 +104,7 @@ public class IncomingCallService extends Service {
                 .setStyle(Notification.CallStyle.forIncomingCall(caller, declineIntent, answerIntent))
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
                 .setContentIntent(answerIntent)
-ç               .build();
+                .build();
         } else {
             notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(callTitle != null ? callTitle : "Incoming Call")
