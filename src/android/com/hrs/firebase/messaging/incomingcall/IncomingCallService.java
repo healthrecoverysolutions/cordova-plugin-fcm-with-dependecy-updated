@@ -103,7 +103,7 @@ public class IncomingCallService extends Service {
                 .setFullScreenIntent(fullScreenIntent, true)
                 .setStyle(Notification.CallStyle.forIncomingCall(caller, declineIntent, answerIntent))
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
-                .build();
+ç               .build();
         } else {
             notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(callTitle != null ? callTitle : "Incoming Call")
@@ -116,6 +116,7 @@ public class IncomingCallService extends Service {
                 .setFullScreenIntent(fullScreenIntent, true)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setOngoing(true)
+                .setContentIntent(answerIntent)
                 .build();
         }
 

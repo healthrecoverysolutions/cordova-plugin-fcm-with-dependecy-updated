@@ -14,6 +14,8 @@
 
     public class IncomingCallActivity extends AppCompatActivity {
         private Bundle extras;
+        private String action;
+
         private final BroadcastReceiver callActionReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -54,10 +56,7 @@
 
             int answerButtonId = getResources().getIdentifier("answer_button", "id", getPackageName());
             findViewById(answerButtonId).setOnClickListener(v -> {
-                Intent intent = new Intent(this, IncomingCallService.class);
-                intent.setAction(Constants.ACTION_ANSWER_CALL);
-                intent.putExtras(extras);
-                startService(intent);
+                action = Constants.ACTION_ANSWER_CALL;
                 restoreSystemUi();
                 finish();
             });
@@ -81,6 +80,12 @@
         protected void onDestroy() {
             super.onDestroy();
             LocalBroadcastManager.getInstance(this).unregisterReceiver(callActionReceiver);
+            if (action != null && action.equals(Constants.ACTION_ANSWER_CALL)) {
+                Intent intent = new Intent(this, IncomingCallService.class);
+                intent.setAction(Constants.ACTION_ANSWER_CALL);
+                intent.putExtras(extras);
+                startService(intent);
+            }
         }
 
         private void hideSystemUI() {
