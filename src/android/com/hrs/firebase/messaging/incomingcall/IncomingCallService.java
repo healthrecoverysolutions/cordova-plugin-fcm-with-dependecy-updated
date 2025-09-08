@@ -20,6 +20,8 @@ import android.os.Looper;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.hrs.firebase.messaging.FCMPluginActivity;
+
 import java.util.Objects;
 
 public class IncomingCallService extends Service {
@@ -44,6 +46,8 @@ public class IncomingCallService extends Service {
         if (timeoutRunnable != null) {
             timeoutHandler.removeCallbacks(timeoutRunnable);
         }
+
+        stopForeground(true);  // remove the notification
     }
 
     @Override
@@ -83,7 +87,7 @@ public class IncomingCallService extends Service {
     private void showIncomingCallNotification(Intent intent) {
         Bundle extras = intent.getExtras();
         PendingIntent fullScreenIntent = getFullScreenIntent(extras);
-        PendingIntent answerIntent = getAnswerIntent(extras);
+        PendingIntent answerIntent = getAnswerIntent(extras, intent);
         PendingIntent declineIntent = getDeclineIntent(extras);
 
 
@@ -160,12 +164,30 @@ public class IncomingCallService extends Service {
         );
     }
 
-    private PendingIntent getAnswerIntent(Bundle extras) {
-        Intent answerIntent = new Intent(this, IncomingCallService.class);
-        answerIntent.setAction(Constants.ACTION_ANSWER_CALL);
-        answerIntent.putExtras(extras);
+    private PendingIntent getAnswerIntent(Bundle extras, Intent intent) {
+//        Intent answerIntent = new Intent(this, IncomingCallService.class);
+//        answerIntent.setAction(Constants.ACTION_ANSWER_CALL);
+//        answerIntent.putExtras(extras);
+//
+//        return PendingIntent.getService(
+//            this,
+//            0,
+//            answerIntent,
+//            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+//        );
 
-        return PendingIntent.getService(
+//        Intent answerIntent = new Intent(context, FCMPluginActivity.class);
+//        answerIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//        Bundle data = intent.getBundleExtra(Constants.EXTRA_CALL_DATA);
+//        answerIntent.putExtra("data", data);
+
+       // context.startActivity(answerIntent);
+        Intent answerIntent = new Intent(this, FCMPluginActivity.class);
+        answerIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        answerIntent.setAction(Constants.ACTION_ANSWER_CALL);
+        Bundle data = intent.getBundleExtra(Constants.EXTRA_CALL_DATA);
+        answerIntent.putExtra("data", data);
+        return PendingIntent.getActivity(
             this,
             0,
             answerIntent,
