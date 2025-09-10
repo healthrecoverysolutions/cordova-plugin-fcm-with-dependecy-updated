@@ -35,8 +35,8 @@ public class FCMPluginActivity extends Activity {
         Intent intent = getIntent();
         String action = intent.getAction();
         if (action != null && action.equals(Constants.ACTION_ANSWER_CALL)) {
-            Intent intent1 = new Intent(this, IncomingCallService.class);
-            stopService(intent1);
+            Intent callServiceIntent = new Intent(this, IncomingCallService.class);
+            stopService(callServiceIntent);
 
             this.openCall(intent, true);
         } else {
