@@ -166,7 +166,7 @@ public class IncomingCallService extends Service {
 
     private PendingIntent getAnswerIntent(Intent intent) {
         Intent answerIntent = new Intent(this, FCMPluginActivity.class);
-        answerIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        answerIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         answerIntent.setAction(Constants.ACTION_ANSWER_CALL);
         Bundle data = intent.getBundleExtra(Constants.EXTRA_CALL_DATA);
         answerIntent.putExtra("data", data);
