@@ -2,21 +2,19 @@ package com.hrs.firebase.messaging;
 
 import static org.apache.cordova.BuildHelper.getBuildConfigValue;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
+import android.app.Activity;
+import android.app.Application;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
 
 import androidx.annotation.NonNull;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
-import com.hrs.firebase.messaging.incomingcall.Constants;
 import com.hrs.firebase.messaging.incomingcall.IncomingCall;
 
 import org.apache.cordova.CordovaWebView;
@@ -39,7 +37,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         Timber.d("New token: %s", token);
         FCMPlugin.sendTokenRefresh(token);
     }
-
 
     /**
      * Called when message is received.
@@ -154,4 +151,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             Timber.e("Failed to show incoming call notification%s", e.getMessage());
         }
     }
+
+
+
 }
