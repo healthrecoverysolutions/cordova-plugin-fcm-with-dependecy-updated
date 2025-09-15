@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+
 import android.view.View;
 
 import com.hrs.firebase.messaging.incomingcall.Constants;
@@ -22,7 +23,6 @@ import java.util.Objects;
 import timber.log.Timber;
 
 public class FCMPluginActivity extends Activity {
-
     /*
      * this activity will be started if the user touches a notification that we own.
      * We send it's data off to the push plugin for processing.
@@ -138,7 +138,6 @@ public class FCMPluginActivity extends Activity {
         Timber.d("==> FCMPluginActivity onResume");
         final NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancelAll();
-
     }
 
     @Override
@@ -151,8 +150,6 @@ public class FCMPluginActivity extends Activity {
     public void onStop() {
         super.onStop();
         Timber.d("==> FCMPluginActivity onStop");
-        View decorView = getWindow().getDecorView();
-        decorView.postInvalidate();
     }
 
 }
