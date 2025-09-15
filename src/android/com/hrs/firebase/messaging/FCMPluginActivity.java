@@ -3,20 +3,12 @@ package com.hrs.firebase.messaging;
 import static org.apache.cordova.BuildHelper.getBuildConfigValue;
 
 import android.app.Activity;
-import android.app.Application;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.util.Log;
 import android.view.View;
-import android.view.WindowManager;
-
-
-import androidx.annotation.NonNull;
 
 import com.hrs.firebase.messaging.incomingcall.Constants;
 import com.hrs.firebase.messaging.incomingcall.IncomingCallService;
@@ -31,8 +23,6 @@ import timber.log.Timber;
 
 public class FCMPluginActivity extends Activity {
 
-    private final CustomActivityLifecycleCallbacks lifecycleCallbacks = new CustomActivityLifecycleCallbacks();
-
     /*
      * this activity will be started if the user touches a notification that we own.
      * We send it's data off to the push plugin for processing.
@@ -41,7 +31,6 @@ public class FCMPluginActivity extends Activity {
      */
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        getApplication().registerActivityLifecycleCallbacks(lifecycleCallbacks);
         super.onCreate(savedInstanceState);
         Timber.d("==> FCMPluginActivity onCreate");
         Intent intent = getIntent();
@@ -150,10 +139,6 @@ public class FCMPluginActivity extends Activity {
         final NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancelAll();
 
-//
-//            View decorView = getWindow().getDecorView();
-//            decorView.postInvalidate();
-
     }
 
     @Override
@@ -168,57 +153,6 @@ public class FCMPluginActivity extends Activity {
         Timber.d("==> FCMPluginActivity onStop");
         View decorView = getWindow().getDecorView();
         decorView.postInvalidate();
-    }
-
-    public class CustomActivityLifecycleCallbacks implements Application.ActivityLifecycleCallbacks {
-
-        @Override
-        public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-            Timber.i("onCreate(): %s", activity.getClass().getSimpleName());
-        }
-
-        @Override
-        public void onActivityStarted(Activity activity) {
-            Timber.i("onStart(): %s", activity.getClass().getSimpleName());
-        }
-
-        @Override
-        public void onActivityResumed(Activity activity) {
-            Timber.i("onResume(): %s", activity.getClass().getSimpleName());
-        }
-
-        @Override
-        public void onActivityPaused(Activity activity) {
-            Timber.i("onPause(): %s", activity.getClass().getSimpleName());
-            Log.d("AB", "********* FCMPLUGIN ACTIVITY --->> ON PAUSE called -->> Relayouting");
-            if (activity.getClass().getSimpleName().contains("MainActivity")) {
-//                Log.d("AB", "--->> ON PAUSE called -->> Relayouting");
-//                getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
-//                getWindow().getDecorView().postInvalidate();
-//                getWindow().getDecorView().requestLayout();;
-                new Handler(Looper.getMainLooper()).postDelayed(() -> { // TODO check for UI thread
-                // Step 3: Finish current activity
-                getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
-                getWindow().getDecorView().postInvalidate();
-                getWindow().getDecorView().requestLayout();
-            }, 1000);
-            }
-        }
-
-        @Override
-        public void onActivitySaveInstanceState(Activity activity, @NonNull Bundle outState) {
-            Timber.i("onSaveInstanceState(): %s", activity.getClass().getSimpleName());
-        }
-
-        @Override
-        public void onActivityStopped(Activity activity) {
-            Timber.i("onStop(): %s", activity.getClass().getSimpleName());
-        }
-
-        @Override
-        public void onActivityDestroyed(Activity activity) {
-            Timber.i("onDestroy(): %s", activity.getClass().getSimpleName());
-        }
     }
 
 }

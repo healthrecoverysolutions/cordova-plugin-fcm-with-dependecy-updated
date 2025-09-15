@@ -49,7 +49,6 @@ public class IncomingCallActivity extends AppCompatActivity {
         hideSystemUI();
 
         setContentView(getResources().getIdentifier("activity_incoming_call", "layout", getPackageName()));
-        Log.d("AB", "----->> ON CREATE hiding system UI");
 
         String callerName = getIntent().getStringExtra(Constants.EXTRA_CALLER_NAME);
         String callTitle = getIntent().getStringExtra(Constants.EXTRA_CALL_TITLE);
@@ -92,9 +91,6 @@ public class IncomingCallActivity extends AppCompatActivity {
             callActionReceiver, new IntentFilter(Constants.ACTION_CALL_LEFT));
 
     }
-
-
-
 
     @Override
     protected void onDestroy() {
