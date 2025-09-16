@@ -9,8 +9,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
+import android.view.View;
 
 import com.hrs.firebase.messaging.incomingcall.Constants;
+import com.hrs.firebase.messaging.incomingcall.IncomingCallService;
 
 import org.json.JSONException;
 
@@ -34,6 +36,9 @@ public class FCMPluginActivity extends Activity {
         Intent intent = getIntent();
         String action = intent.getAction();
         if (action != null && action.equals(Constants.ACTION_ANSWER_CALL)) {
+            Intent callServiceIntent = new Intent(this, IncomingCallService.class);
+            stopService(callServiceIntent);
+
             this.openCall(intent, true);
         } else {
             this.sendPushPayload();

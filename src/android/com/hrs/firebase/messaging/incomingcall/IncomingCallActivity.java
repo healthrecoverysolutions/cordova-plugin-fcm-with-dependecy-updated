@@ -12,6 +12,8 @@
     import androidx.appcompat.app.AppCompatActivity;
     import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+    import com.hrs.firebase.messaging.FCMPluginActivity;
+
     public class IncomingCallActivity extends AppCompatActivity {
         private Bundle extras;
         private String action;
@@ -50,8 +52,8 @@
             // Wake up the device and show the activity
             getWindow().addFlags(
                     WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
-                            WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
-                            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
+                        WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
             );
 
             int answerButtonId = getResources().getIdentifier("answer_button", "id", getPackageName());
@@ -73,18 +75,24 @@
 
             LocalBroadcastManager.getInstance(this).registerReceiver(
                 callActionReceiver, new IntentFilter(Constants.ACTION_CALL_LEFT));
-        }
 
+        }
 
         @Override
         protected void onDestroy() {
             super.onDestroy();
             LocalBroadcastManager.getInstance(this).unregisterReceiver(callActionReceiver);
             if (action != null && action.equals(Constants.ACTION_ANSWER_CALL)) {
-                Intent intent = new Intent(this, IncomingCallService.class);
+                Intent incomingCallIntent = getIntent();
+                Bundle data = incomingCallIntent.getBundleExtra(Constants.EXTRA_CALL_DATA);
+                int notificationId = incomingCallIntent.getIntExtra("notificationId", -1);
+                Intent intent = new Intent(IncomingCallActivity.this, FCMPluginActivity.class);
                 intent.setAction(Constants.ACTION_ANSWER_CALL);
-                intent.putExtras(extras);
-                startService(intent);
+                intent.putExtra("data", data);
+                intent.putExtra("notificationId", notificationId);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                startActivity(intent);
+                action = null;
             }
         }
 
@@ -105,4 +113,3 @@
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
     }
-
