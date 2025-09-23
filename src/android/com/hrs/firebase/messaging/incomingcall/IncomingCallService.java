@@ -138,9 +138,9 @@ public class IncomingCallService extends Service {
             );
 
             AudioAttributes audioAttributes = new AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build();
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build();
 
             channel.setSound(ringtoneUri, audioAttributes);
             channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
