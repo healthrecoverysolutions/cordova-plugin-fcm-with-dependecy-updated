@@ -76,7 +76,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
 
         Boolean isKnoxManage = (Boolean) getBuildConfigValue(getApplicationContext(), "KNOXMANAGE");
-        if (FCMPlugin.appInForeground || Build.VERSION.SDK_INT <= Build.VERSION_CODES.S || Boolean.FALSE.equals(isKnoxManage)) {
+        if (FCMPlugin.appInForeground || Boolean.FALSE.equals(isKnoxManage)) {
             handleBannerNotificationForCallLeft(isKnoxManage, data); //Handle native banner dismissal when clinician left call, banner is visible, app is in fg
             FCMPlugin.sendPushPayload(data);
         } else {
