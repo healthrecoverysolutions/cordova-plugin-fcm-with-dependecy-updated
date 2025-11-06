@@ -77,6 +77,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         Boolean isKnoxManage = (Boolean) getBuildConfigValue(getApplicationContext(), "KNOXMANAGE");
         if (FCMPlugin.appInForeground || Build.VERSION.SDK_INT <= Build.VERSION_CODES.S || Boolean.FALSE.equals(isKnoxManage)) {
+            handleBannerNotificationForCallLeft(isKnoxManage, data); //Handle native banner dismissal when clinician left call, banner is visible, app is in fg
             FCMPlugin.sendPushPayload(data);
         } else {
             JSONObject jsonData = null;
@@ -117,6 +118,27 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         }
 
         Timber.d("	Notification Data: %s", data.toString());
+    }
+
+    /**
+     * Handle call left notification event for IncomingCall banner dismissal
+     * @param isKnoxManage
+     * @param data
+     */
+    private void handleBannerNotificationForCallLeft(Boolean isKnoxManage, HashMap<String, Object> data) {
+        if(Boolean.TRUE.equals(isKnoxManage)) {
+            JSONObject jsonData = null;
+            if (data != null && data.get("jsonData") instanceof String) {
+                try {
+                    jsonData = new JSONObject((String) data.get("jsonData"));
+                } catch (JSONException e) {
+                    Timber.e(e, "Invalid JSON in push notification data");
+                }
+            }
+            if (jsonData != null && jsonData.optString("action").equals("call_left")) {
+                IncomingCall.callLeft(this);
+            }
+        }
     }
 
     private void handleGenericNotification(JSONObject jsonData) {
