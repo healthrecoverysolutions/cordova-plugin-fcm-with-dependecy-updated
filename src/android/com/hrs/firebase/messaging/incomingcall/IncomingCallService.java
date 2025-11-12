@@ -7,6 +7,9 @@ import android.app.PendingIntent;
 import android.app.Person;
 import android.app.Service;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.graphics.BitmapFactory;
 import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -110,12 +113,22 @@ public class IncomingCallService extends Service {
                 .setContentIntent(answerIntent)
                 .build();
         } else {
+            ApplicationInfo appInfo = null;
+            int largeIcon = 0;
+            try {
+                appInfo = this.getPackageManager().getApplicationInfo(this.getPackageName(), PackageManager.GET_META_DATA);
+                largeIcon = appInfo.metaData.getInt("com.google.firebase.messaging.default_notification_icon", 0);
+            } catch (PackageManager.NameNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+
             notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(callTitle != null ? callTitle : "Incoming Call")
                 .setContentText(callerName != null ? callerName : "Tap to answer")
                 .addAction(android.R.drawable.ic_menu_call, "Answer", answerIntent)
                 .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Decline", declineIntent)
                 .setSmallIcon(android.R.drawable.sym_call_incoming)
+                .setLargeIcon(BitmapFactory.decodeResource(this.getResources(), largeIcon))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_CALL)
                 .setFullScreenIntent(fullScreenIntent, true)
