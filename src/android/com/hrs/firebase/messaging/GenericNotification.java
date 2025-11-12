@@ -11,19 +11,14 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.drawable.Icon;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
-import android.system.Os;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import ionic.hrsmobile.byod.patient.R;
 
 
 public class GenericNotification {
@@ -46,7 +41,7 @@ public class GenericNotification {
         Notification.Builder builder = new Notification.Builder(context, CHANNEL_ID);
 
         builder
-            .setSmallIcon(R.drawable.ic_notification_tray)
+            .setSmallIcon(context.getResources().getIdentifier("ic_notification_tray", "drawable", context.getPackageName()))
             .setContentTitle(title)
             .setContentText(body)
             .setAutoCancel(true)
