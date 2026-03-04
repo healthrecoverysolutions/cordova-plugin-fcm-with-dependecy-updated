@@ -16,6 +16,10 @@ function replaceFileContent(filePath, toReplace, replacementText) {
 }
 
 function resolveGradleFilePath(directory, baseName) {
+    if (!fs.existsSync(directory)) {
+        console.log(`${pluginName} - resolveGradleFilePath: directory not found, skipping -> ${directory}`);
+        return null;
+    }
     for (const entry of fs.readdirSync(directory, {withFileTypes: true})) {
         if (entry?.isFile() && entry.name.endsWith(baseName)) {
             return path.resolve(directory, entry.name);
@@ -43,7 +47,11 @@ function main(context) {
     if (inheritGoogleServices) {
         const gradleDirectory = path.resolve(projectRoot, `platforms`, `android`, pluginName);
         const gradleFilePath = resolveGradleFilePath(gradleDirectory, `FCMPlugin.gradle`);
-        disableGoogleServicesApplyCall(gradleFilePath);
+        if (gradleFilePath) {
+            disableGoogleServicesApplyCall(gradleFilePath);
+        } else {
+            console.log(`${pluginName} - FCMPlugin.gradle not found, skipping google services disable`);
+        }
     }
 }
 
