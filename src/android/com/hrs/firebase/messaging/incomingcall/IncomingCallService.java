@@ -11,6 +11,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.media.AudioAttributes;
+import android.media.MediaPlayer;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
@@ -27,6 +28,8 @@ import com.hrs.firebase.messaging.FCMPluginActivity;
 
 import java.util.Objects;
 
+import timber.log.Timber;
+
 public class IncomingCallService extends Service {
     public static final String CHANNEL_ID = "incoming_call_channel";
     private static final CharSequence CHANNEL_NAME = "Incoming Calls";
@@ -34,6 +37,7 @@ public class IncomingCallService extends Service {
     private long CALL_TIMEOUT = 90 * 1000;
     private final Handler timeoutHandler = new Handler(Looper.getMainLooper());
     private Runnable timeoutRunnable;
+    private MediaPlayer player;
 
     @Override
     public void onCreate() {
@@ -58,7 +62,9 @@ public class IncomingCallService extends Service {
         if (intent != null && intent.getAction() != null) {
             String action = intent.getAction();
             Bundle extras = intent.getExtras();
-
+            if (isAndroidOS16OrMore()) { // For OS >=16, stop ringtone via player
+                stopMediaPlayerRingtone();
+            }
             switch (action) {
                 case Constants.ACTION_ANSWER_CALL:
                     Intent answerIntent = new Intent(Constants.ACTION_ANSWER_CALL);
@@ -75,24 +81,24 @@ public class IncomingCallService extends Service {
                     LocalBroadcastManager.getInstance(this).sendBroadcast(callLeftIntent);
                     break;
             }
-
             stopForeground(true);
             stopSelf();
         } else {
             showIncomingCallNotification(intent);
+            if (isAndroidOS16OrMore()) {
+                playMediaPlayerRingtone(); // OS 16 is not playing the notification call type sound in a loop thus playing it via media player
+            }
             startCallTimeout(intent.getExtras()); // start timeout here for new call
         }
 
         return START_STICKY;
     }
 
-
     private void showIncomingCallNotification(Intent intent) {
         Bundle extras = intent.getExtras();
         PendingIntent fullScreenIntent = getFullScreenIntent(extras);
         PendingIntent answerIntent = getAnswerIntent(intent);
         PendingIntent declineIntent = getDeclineIntent(extras);
-
 
         Notification notification;
         String callerName = intent.getStringExtra(Constants.EXTRA_CALLER_NAME);
@@ -155,7 +161,7 @@ public class IncomingCallService extends Service {
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .build();
 
-            channel.setSound(ringtoneUri, audioAttributes);
+            channel.setSound(isAndroidOS16OrMore() ? null : ringtoneUri, audioAttributes); // As we are playing this sound via player in a loop for OS 16, we dont set it here
             channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
             channel.setImportance(NotificationManager.IMPORTANCE_HIGH);
 
@@ -218,5 +224,54 @@ public class IncomingCallService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    private boolean isAndroidOS16OrMore() {
+       return Build.VERSION.SDK_INT >= 35;
+    }
+
+    /**
+     * Starts playing the device's default ringtone using MediaPlayer in a loop.
+     *
+     * <p>Note - On Android OS 16 and above, notification sounds for call-style alerts
+     * are not automatically looping when triggered via the notification system.
+     * To ensure the ringtone continues playing until the user performs an
+     * action on the notification (e.g., accept, dismiss, or open the app),
+     * this method manually starts a MediaPlayer instance with looping enabled.
+     */
+    private void playMediaPlayerRingtone() {
+        // Release existing player if already running
+        if (player != null) {
+            player.release();
+            player = null;
+        }
+
+        Uri ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+        player = MediaPlayer.create(this, ringtoneUri);
+
+        if (player != null) {
+            player.setLooping(true);
+            player.start();
+            Timber.d("Playing media player ringtone in loop");
+        }
+    }
+
+    /**
+     * Stops the looping ringtone playback started by {@link #playMediaPlayerRingtone()}.
+     *
+     * <p>This method stops and releases the MediaPlayer instance used
+     * to manually play the ringtone.
+     */
+    private void stopMediaPlayerRingtone() {
+        if (player != null) {
+            try {
+                player.stop();
+                Timber.d("Stopped media player");
+            } catch (IllegalStateException e) {
+                Timber.e("Failed to stop media player  %s", e.getMessage());
+            }
+            player.release();
+            player = null;
+        }
     }
 }
