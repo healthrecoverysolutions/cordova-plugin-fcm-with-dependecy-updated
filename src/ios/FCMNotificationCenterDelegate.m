@@ -61,10 +61,23 @@ NSMutableArray<NSObject<UNUserNotificationCenterDelegate>*> *subNotificationCent
        willPresentNotification:(UNNotification *)notification
          withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler {
     DDLogDebug(@"FCMNotificationCenterDelegate.willPresentNotification!");
+
+    // If this is our locally-scheduled data-only notification, present it visually.
+    // Do not dispatch to JS here — the payload will be delivered when the user taps it.
+    NSDictionary *notificationUserInfo = notification.request.content.userInfo;
+    if (notificationUserInfo[@"jsonData"] != nil) {
+        DDLogDebug(@"Data-only local notification will present visually");
+        if (@available(iOS 14.0, *)) {
+            completionHandler(UNNotificationPresentationOptionList | UNNotificationPresentationOptionBanner | UNNotificationPresentationOptionSound);
+        } else {
+            completionHandler(UNNotificationPresentationOptionAlert | UNNotificationPresentationOptionSound);
+        }
+        return;
+    }
+
     NSDictionary *jsonData = [self extractJSONData:notification withWasTapped:NO];
     [FCMPlugin dispatchNotification:jsonData];
-    __block UNNotificationPresentationOptions notificationPresentationOptions = UNNotificationPresentationOptionNone;
-    completionHandler(notificationPresentationOptions);
+    completionHandler(UNNotificationPresentationOptionNone);
 }
 
 // Handle notification messages after display notification is tapped by the user.

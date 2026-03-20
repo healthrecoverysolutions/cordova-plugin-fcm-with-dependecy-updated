@@ -24,6 +24,7 @@ static NSDictionary *initialPushPayload;
 static NSString *fcmToken;
 static NSString *apnsToken;
 NSString *const kGCMMessageIDKey = @"gcm.message_id";
+NSString *const kHRSPendingDataNotificationsKey = @"HRSPendingDataNotifications";
 FCMNotificationCenterDelegate *notificationCenterDelegate;
 
 //Method swizzling
@@ -121,8 +122,43 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
         // Print message ID.
         DDLogDebug(@"Message ID: %@", userInfo[@"gcm.message_id"]);
 
-        // Pring full message.
+        // Print full message.
         DDLogDebug(@"%@", userInfo);
+
+        // Detect data-only push: presence of our jsonData key with no display notification.
+        NSString *jsonDataString = userInfo[@"jsonData"];
+        BOOL isDataOnlyPush = (jsonDataString != nil && [jsonDataString isKindOfClass:[NSString class]]);
+
+        if (isDataOnlyPush) {
+            DDLogDebug(@"Data-only push received with jsonData key");
+            NSError *parseError;
+            NSData *jsonBytes = [jsonDataString dataUsingEncoding:NSUTF8StringEncoding];
+            NSDictionary *parsedData = [NSJSONSerialization JSONObjectWithData:jsonBytes options:0 error:&parseError];
+
+            if (application.applicationState == UIApplicationStateBackground ||
+                application.applicationState == UIApplicationStateInactive) {
+                // Persist notification so the app can process it after launch.
+                NSMutableDictionary *storedPayload = [userInfo mutableCopy];
+                [storedPayload setValue:@(NO) forKey:@"wasTapped"];
+                [AppDelegate storeDataNotification:storedPayload];
+                lastPush = storedPayload;
+
+                // Show a visible notification in the system tray.
+                if (!parseError && parsedData) {
+                    [AppDelegate scheduleLocalNotificationForDataPush:userInfo withParsedData:parsedData];
+                } else {
+                    DDLogDebug(@"Failed to parse jsonData for local notification: %@", parseError);
+                }
+                completionHandler(UIBackgroundFetchResultNewData);
+            } else if (application.applicationState == UIApplicationStateActive) {
+                // App is in foreground — dispatch directly to JS.
+                NSMutableDictionary *pushData = [userInfo mutableCopy];
+                DDLogDebug(@"Data-only push received while app active, dispatching to JS");
+                [FCMPlugin dispatchNotification:pushData];
+                completionHandler(UIBackgroundFetchResultNewData);
+            }
+            return;
+        }
 
         // If the app is in the background, keep it for later, in case it's not tapped.
         if(application.applicationState == UIApplicationStateBackground) {
@@ -250,6 +286,52 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
         [hexString appendFormat:@"%02x", dataBuffer[i]];
     }
     return [hexString copy];
+}
+
+// Schedule a visible local notification in the system tray for a data-only FCM push.
++ (void)scheduleLocalNotificationForDataPush:(NSDictionary *)userInfo withParsedData:(NSDictionary *)parsedData {
+    NSString *title = parsedData[@"title"] ?: @"Notification";
+    NSString *body = parsedData[@"body"] ?: @"";
+    // Use the payload id as the notification identifier so duplicates are deduplicated by the OS.
+    NSString *notificationId = parsedData[@"id"] ?: [[NSUUID UUID] UUIDString];
+
+    UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
+    content.title = title;
+    content.body = body;
+    content.sound = [UNNotificationSound defaultSound];
+    // Embed the original FCM userInfo so it can be recovered when the notification is tapped.
+    content.userInfo = userInfo;
+
+    UNTimeIntervalNotificationTrigger *trigger = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:1 repeats:NO];
+    UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:notificationId content:content trigger:trigger];
+    [[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request withCompletionHandler:^(NSError *error) {
+        if (error) {
+            DDLogDebug(@"Data notification scheduling error: %@", error);
+        } else {
+            DDLogDebug(@"Data notification scheduled with id: %@", notificationId);
+        }
+    }];
+}
+
+// Persist a data-only notification to NSUserDefaults so it survives app termination.
++ (void)storeDataNotification:(NSDictionary *)notification {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSArray *existing = [defaults arrayForKey:kHRSPendingDataNotificationsKey];
+    NSMutableArray *updated = existing ? [existing mutableCopy] : [NSMutableArray array];
+    [updated addObject:notification];
+    [defaults setObject:[updated copy] forKey:kHRSPendingDataNotificationsKey];
+    [defaults synchronize];
+    DDLogDebug(@"Stored data notification. Total pending: %lu", (unsigned long)updated.count);
+}
+
+// Retrieve and clear all persistently stored data-only notifications.
++ (NSArray *)getDeliveredNotifications {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSArray *notifications = [defaults arrayForKey:kHRSPendingDataNotificationsKey];
+    [defaults removeObjectForKey:kHRSPendingDataNotificationsKey];
+    [defaults synchronize];
+    DDLogDebug(@"Retrieved %lu pending data notifications", (unsigned long)notifications.count);
+    return notifications ?: @[];
 }
 
 // Added deleteInstanceId method in AppDelegate+FCMPlugin.m as it is being consumed in logout.
