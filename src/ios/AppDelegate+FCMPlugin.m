@@ -125,9 +125,12 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
         // Print full message.
         DDLogDebug(@"%@", userInfo);
 
-        // Detect data-only push: presence of our jsonData key with no display notification.
+        // Detect data-only push: our jsonData key is present AND there is no aps.alert,
+        // since a standard display notification can also carry a data payload with jsonData.
         NSString *jsonDataString = userInfo[@"jsonData"];
-        BOOL isDataOnlyPush = (jsonDataString != nil && [jsonDataString isKindOfClass:[NSString class]]);
+        NSDictionary *aps = userInfo[@"aps"];
+        BOOL hasDisplayNotification = (aps[@"alert"] != nil);
+        BOOL isDataOnlyPush = !hasDisplayNotification && (jsonDataString != nil && [jsonDataString isKindOfClass:[NSString class]]);
 
         if (isDataOnlyPush) {
             DDLogDebug(@"Data-only push received with jsonData key");
