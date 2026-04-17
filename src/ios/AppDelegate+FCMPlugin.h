@@ -13,5 +13,9 @@
 + (void)setInitialPushPayload:(NSDictionary*)payload;
 + (void)requestPushPermission:(void (^)(BOOL yesOrNo, NSError* error))block withOptions:(NSDictionary*)options;
 + (void)hasPushPermission:(void (^)(NSNumber* yesNoOrNil))block;
++ (void)storeDataNotification:(NSDictionary *)notification;
++ (void)clearStoredDataNotification:(NSString *)notificationId;
++ (NSArray *)getDeliveredNotifications;
++ (void)scheduleLocalNotificationForDataPush:(NSDictionary *)userInfo withParsedData:(NSDictionary *)parsedData withIdentifier:(NSString *)notificationId;
 
 @end
