@@ -63,6 +63,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         HashMap<String, Object> data = new HashMap<String, Object>();
         data.put("wasTapped", false);
 
+
         if(remoteMessage.getNotification() != null){
             data.put("title", remoteMessage.getNotification().getTitle());
             data.put("body", remoteMessage.getNotification().getBody());
@@ -74,19 +75,21 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             data.put(key, value);
         }
 
-
-        Boolean isKnoxManage = (Boolean) getBuildConfigValue(getApplicationContext(), "KNOXMANAGE");
-        if (FCMPlugin.appInForeground || Boolean.FALSE.equals(isKnoxManage)) {
-            handleBannerNotificationForCallLeft(isKnoxManage, data); //Handle native banner dismissal when clinician left call, banner is visible, app is in fg
+        if (FCMPlugin.appInForeground) {
+            handleBannerNotificationForCallLeft(data); //Handle native banner dismissal when clinician left call, banner is visible, app is in fg
             FCMPlugin.sendPushPayload(data);
-        } else {
+            Timber.d("App in foreground, notification Data: %s", data.toString());
+            return;
+        }
+
+        boolean isDataOnly = remoteMessage.getNotification() == null && !data.isEmpty();
+        if (isDataOnly) {
             JSONObject jsonData = null;
             try {
                 jsonData = new JSONObject((String) Objects.requireNonNull(data.get("jsonData")));
             } catch (JSONException e) {
                 Timber.e(e, "Error decoding jsonData from push notification");
             }
-
             if (jsonData != null && jsonData.optString("action").equals("incoming_call")) {
                 try {
                     handleIncomingCall(jsonData, Utils.createNotificationId(jsonData.getString("id")));
@@ -116,16 +119,15 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 FCMPlugin.sendPushPayload(data);
             }
         }
-
         Timber.d("	Notification Data: %s", data.toString());
     }
 
     /**
      * Handle call left notification event for IncomingCall banner dismissal
-     * @param isKnoxManage
      * @param data
      */
-    private void handleBannerNotificationForCallLeft(Boolean isKnoxManage, HashMap<String, Object> data) {
+    private void handleBannerNotificationForCallLeft(HashMap<String, Object> data) {
+        Boolean isKnoxManage = (Boolean) getBuildConfigValue(getApplicationContext(), "KNOXMANAGE");
         if(Boolean.TRUE.equals(isKnoxManage)) {
             JSONObject jsonData = null;
             if (data != null && data.get("jsonData") instanceof String) {

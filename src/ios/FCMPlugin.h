@@ -13,6 +13,7 @@
 - (void)returnTokenOrRetry:(void (^)(NSString* fcmToken))onSuccess;
 - (void)getAPNSToken:(CDVInvokedUrlCommand*)command;
 - (void)getInitialPushPayload:(CDVInvokedUrlCommand*)command;
+- (void)getDeliveredNotifications:(CDVInvokedUrlCommand*)command;
 - (void)deleteInstanceId:(CDVInvokedUrlCommand*)command;
 - (void)clearAllNotifications:(CDVInvokedUrlCommand *)command;
 - (void)subscribeToTopic:(CDVInvokedUrlCommand*)command;

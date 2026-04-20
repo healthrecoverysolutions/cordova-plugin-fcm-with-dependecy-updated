@@ -24,6 +24,7 @@ static NSDictionary *initialPushPayload;
 static NSString *fcmToken;
 static NSString *apnsToken;
 NSString *const kGCMMessageIDKey = @"gcm.message_id";
+NSString *const kHRSPendingDataNotificationsKey = @"HRSPendingDataNotifications";
 FCMNotificationCenterDelegate *notificationCenterDelegate;
 
 //Method swizzling
@@ -121,14 +122,78 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
         // Print message ID.
         DDLogDebug(@"Message ID: %@", userInfo[@"gcm.message_id"]);
 
-        // Pring full message.
+        // Print full message.
         DDLogDebug(@"%@", userInfo);
 
-        // If the app is in the background, keep it for later, in case it's not tapped.
+        // Detect data-only push: has our jsonData key AND no aps.alert (a display notification
+        // can also carry a jsonData payload, so we must exclude those).
+        NSString *jsonDataString = userInfo[@"jsonData"];
+        NSDictionary *aps = userInfo[@"aps"];
+        BOOL hasDisplayNotification = (aps[@"alert"] != nil);
+        BOOL isDataOnlyPush = !hasDisplayNotification &&
+                              (jsonDataString != nil && [jsonDataString isKindOfClass:[NSString class]]);
+
+        if (isDataOnlyPush) {
+            DDLogDebug(@"Data-only push received");
+            NSError *parseError;
+            NSData *jsonBytes = [jsonDataString dataUsingEncoding:NSUTF8StringEncoding];
+            NSDictionary *parsedData = [NSJSONSerialization JSONObjectWithData:jsonBytes options:0 error:&parseError];
+
+            if (application.applicationState == UIApplicationStateActive) {
+                // Foreground — dispatch directly to JS.
+                DDLogDebug(@"Data-only push: app in foreground, dispatching to JS");
+                NSMutableDictionary *pushData = [userInfo mutableCopy];
+                [FCMPlugin dispatchNotification:pushData];
+            } else {
+                // Background / inactive.
+                if (parseError || !parsedData) {
+                    // Can't parse jsonData — store raw payload so it's not lost; no banner possible.
+                    DDLogDebug(@"Data-only push: failed to parse jsonData, storing raw payload: %@", parseError);
+                    NSMutableDictionary *storedPayload = [userInfo mutableCopy];
+                    [storedPayload setValue:@(NO) forKey:@"wasTapped"];
+                    [AppDelegate storeDataNotification:storedPayload];
+                    completionHandler(UIBackgroundFetchResultNewData);
+                    return;
+                }
+
+                NSString *title = parsedData[@"title"];
+                BOOL hasTitle = (title != nil && ![title isEqualToString:@""]);
+
+                if (hasTitle) {
+                    // Has a title — show a visible banner, persist for getDeliveredNotifications,
+                    // and delete the FCM token if this is a deactivate push.
+                    DDLogDebug(@"Data-only push: background with title, showing banner and persisting");
+                    // Pre-compute the identifier so the stored payload and the scheduled
+                    // notification share the same value — needed for reliable clear-on-tap.
+                    NSString *notificationId = parsedData[@"id"] ?: [[NSUUID UUID] UUIDString];
+                    NSMutableDictionary *storedPayload = [userInfo mutableCopy];
+                    [storedPayload setValue:@(NO) forKey:@"wasTapped"];
+                    [storedPayload setValue:notificationId forKey:@"HRSNotificationIdentifier"];
+                    [AppDelegate storeDataNotification:storedPayload];
+                    [AppDelegate scheduleLocalNotificationForDataPush:userInfo withParsedData:parsedData withIdentifier:notificationId];
+
+                    if ([parsedData[@"status"] isEqualToString:@"deactivate"]) {
+                        DDLogDebug(@"Data-only push: deactivate status, deleting FCM token");
+                        [[FIRMessaging messaging] deleteDataWithCompletion:^(NSError *error) {
+                            DDLogDebug(@"FCM token deleted after deactivate push: %@", error ?: @"success");
+                        }];
+                    }
+                } else {
+                    // No title — silent push, dispatch to JS (mirrors Android silent push path).
+                    DDLogDebug(@"Data-only push: background with no title, dispatching to JS");
+                    NSMutableDictionary *pushData = [userInfo mutableCopy];
+                    [FCMPlugin dispatchNotification:pushData];
+                }
+            }
+            completionHandler(UIBackgroundFetchResultNewData);
+            return;
+        }
+
+        // Standard display notification handling.
         if(application.applicationState == UIApplicationStateBackground) {
             NSMutableDictionary *jsonData = [userInfo mutableCopy];
             [jsonData setValue:@(NO) forKey:@"wasTapped"];
-            DDLogDebug(@"app active");
+            DDLogDebug(@"app in background");
             lastPush = jsonData;
             [AppDelegate setInitialPushPayload:lastPush];
         } else if(application.applicationState == UIApplicationStateInactive) {
@@ -250,6 +315,82 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
         [hexString appendFormat:@"%02x", dataBuffer[i]];
     }
     return [hexString copy];
+}
+
+// Schedule a visible local notification in the system tray for a data-only FCM push.
++ (void)scheduleLocalNotificationForDataPush:(NSDictionary *)userInfo withParsedData:(NSDictionary *)parsedData withIdentifier:(NSString *)notificationId {
+    NSString *title = parsedData[@"title"] ?: @"";
+    NSString *body  = parsedData[@"body"]  ?: @"";
+
+    UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
+    content.title   = title;
+    content.body    = body;
+    content.sound   = [UNNotificationSound defaultSound];
+    // Embed the original FCM userInfo so it can be recovered when the notification is tapped.
+    // Also stamp a flag so FCMNotificationCenterDelegate can distinguish this locally-scheduled
+    // data-only notification from a regular display notification (both may carry a jsonData key).
+    NSMutableDictionary *enrichedUserInfo = [userInfo mutableCopy];
+    enrichedUserInfo[@"HRSIsDataOnlyNotification"] = @YES;
+    content.userInfo = enrichedUserInfo;
+
+    // nil trigger = deliver immediately; 1-second interval avoids a framework restriction
+    // on triggers with interval < 1.
+    UNTimeIntervalNotificationTrigger *trigger = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:1 repeats:NO];
+    UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:notificationId content:content trigger:trigger];
+    [[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request withCompletionHandler:^(NSError *error) {
+        if (error) {
+            DDLogDebug(@"Data-only notification scheduling error: %@", error);
+        } else {
+            DDLogDebug(@"Data-only notification scheduled with id: %@", notificationId);
+        }
+    }];
+}
+
+// Persist a data-only notification to NSUserDefaults so it survives app termination.
++ (void)storeDataNotification:(NSDictionary *)notification {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSArray *existing = [defaults arrayForKey:kHRSPendingDataNotificationsKey];
+    NSMutableArray *updated = existing ? [existing mutableCopy] : [NSMutableArray array];
+    [updated addObject:notification];
+    [defaults setObject:[updated copy] forKey:kHRSPendingDataNotificationsKey];
+    [defaults synchronize];
+    DDLogDebug(@"Stored data-only notification. Total pending: %lu", (unsigned long)updated.count);
+}
+
+// Remove a single data-only notification from UserDefaults by its notification identifier (the
+// id field from jsonData). Called when the user taps the banner so we don't double-deliver.
++ (void)clearStoredDataNotification:(NSString *)notificationId {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSArray *existing = [defaults arrayForKey:kHRSPendingDataNotificationsKey];
+    if (!existing || existing.count == 0) return;
+
+    NSMutableArray *updated = [existing mutableCopy];
+    [updated filterUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(id obj, NSDictionary *bindings) {
+        NSDictionary *entry = (NSDictionary *)obj;
+        NSString *storedIdentifier = entry[@"HRSNotificationIdentifier"];
+        return storedIdentifier == nil || ![storedIdentifier isEqualToString:notificationId];
+    }]];
+    [defaults setObject:[updated copy] forKey:kHRSPendingDataNotificationsKey];
+    [defaults synchronize];
+    DDLogDebug(@"Cleared tapped data-only notification '%@' from UserDefaults store", notificationId);
+}
+
+// Retrieve and clear all persistently stored data-only notifications.
++ (NSArray *)getDeliveredNotifications {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSArray *notifications = [defaults arrayForKey:kHRSPendingDataNotificationsKey];
+    [defaults removeObjectForKey:kHRSPendingDataNotificationsKey];
+    [defaults synchronize];
+    DDLogDebug(@"Retrieved %lu pending data-only notifications", (unsigned long)notifications.count);
+    if (!notifications) return @[];
+    // Strip internal tracking keys before handing the payloads to JS.
+    NSMutableArray *result = [NSMutableArray arrayWithCapacity:notifications.count];
+    for (NSDictionary *notification in notifications) {
+        NSMutableDictionary *cleaned = [notification mutableCopy];
+        [cleaned removeObjectForKey:@"HRSNotificationIdentifier"];
+        [result addObject:cleaned];
+    }
+    return result;
 }
 
 // Added deleteInstanceId method in AppDelegate+FCMPlugin.m as it is being consumed in logout.

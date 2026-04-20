@@ -200,6 +200,16 @@ static FCMPlugin *fcmPluginInstance = nil;
     }];
 }
 
+- (void)getDeliveredNotifications:(CDVInvokedUrlCommand *)command {
+    DDLogDebug(@"getDeliveredNotifications");
+    [self.commandDelegate runInBackground:^{
+        NSArray *notifications = [AppDelegate getDeliveredNotifications];
+        DDLogDebug(@"getDeliveredNotifications returning %lu items", (unsigned long)notifications.count);
+        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:notifications];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
+}
+
 - (void)deleteInstanceId:(CDVInvokedUrlCommand *)command {
     [self.commandDelegate runInBackground:^{
         [AppDelegate deleteInstanceId:^(NSError *error) {
