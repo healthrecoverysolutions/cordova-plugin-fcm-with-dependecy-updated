@@ -71,7 +71,7 @@ public class FCMPluginActivity extends Activity {
 
         Timber.d("==> USER TAPPED NOTIFICATION");
         Map<String, Object> data;
-        Object object = Objects.requireNonNull(intentExtras.get("data"));
+        Object object = intentExtras.get("data");
         if (object instanceof Bundle) {
             data = Utils.bundleToHashMap((Bundle) object);
         } else {
