@@ -171,11 +171,6 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
                     [storedPayload setValue:notificationId forKey:@"HRSNotificationIdentifier"];
                     [AppDelegate storeDataNotification:storedPayload];
                     [AppDelegate scheduleLocalNotificationForDataPush:userInfo withParsedData:parsedData withIdentifier:notificationId];
-                } else {
-                    // No title — silent push, dispatch to JS (mirrors Android silent push path).
-                    DDLogDebug(@"Data-only push: background with no title, dispatching to JS");
-                    NSMutableDictionary *pushData = [userInfo mutableCopy];
-                    [FCMPlugin dispatchNotification:pushData];
                 }
             }
             completionHandler(UIBackgroundFetchResultNewData);
