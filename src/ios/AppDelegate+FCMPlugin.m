@@ -44,7 +44,7 @@ FCMNotificationCenterDelegate *notificationCenterDelegate;
         [notificationCenterDelegate configureForNotifications];
     }
     // For iOS message (sent via FCM)
-    // Fixed DEV-15364 
+    // Fixed DEV-15364
     // Setting delegate to track firebase events.
     [FIRMessaging messaging].delegate = self;
 
@@ -171,13 +171,6 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
                     [storedPayload setValue:notificationId forKey:@"HRSNotificationIdentifier"];
                     [AppDelegate storeDataNotification:storedPayload];
                     [AppDelegate scheduleLocalNotificationForDataPush:userInfo withParsedData:parsedData withIdentifier:notificationId];
-
-                    if ([parsedData[@"status"] isEqualToString:@"deactivate"]) {
-                        DDLogDebug(@"Data-only push: deactivate status, deleting FCM token");
-                        [[FIRMessaging messaging] deleteDataWithCompletion:^(NSError *error) {
-                            DDLogDebug(@"FCM token deleted after deactivate push: %@", error ?: @"success");
-                        }];
-                    }
                 } else {
                     // No title — silent push, dispatch to JS (mirrors Android silent push path).
                     DDLogDebug(@"Data-only push: background with no title, dispatching to JS");
