@@ -5,6 +5,7 @@
 
 + (void)dispatchTokenRefresh:(NSString *)token;
 + (void)dispatchNotification:(NSDictionary *)notification;
++ (BOOL)isPluginReady;
 + (NSString *)toJsonString:(NSDictionary *)dictionary;
 
 - (void)notifyFCMTokenRefresh:(NSString*) token;
