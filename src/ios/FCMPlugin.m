@@ -30,6 +30,10 @@ static FCMPlugin *fcmPluginInstance = nil;
     }
 }
 
++ (BOOL)isPluginReady {
+    return fcmPluginInstance != nil;
+}
+
 + (void)dispatchNotification:(NSDictionary *)notification {
     if (fcmPluginInstance != nil) {
         [fcmPluginInstance notifyOfMessage:notification];

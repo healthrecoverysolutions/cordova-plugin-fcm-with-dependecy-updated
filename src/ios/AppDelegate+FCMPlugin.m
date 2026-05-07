@@ -139,7 +139,7 @@ fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
             NSData *jsonBytes = [jsonDataString dataUsingEncoding:NSUTF8StringEncoding];
             NSDictionary *parsedData = [NSJSONSerialization JSONObjectWithData:jsonBytes options:0 error:&parseError];
 
-            if (application.applicationState == UIApplicationStateActive) {
+            if (application.applicationState == UIApplicationStateActive && [FCMPlugin isPluginReady]) {
                 // Foreground — dispatch directly to JS.
                 DDLogDebug(@"Data-only push: app in foreground, dispatching to JS");
                 NSMutableDictionary *pushData = [userInfo mutableCopy];
