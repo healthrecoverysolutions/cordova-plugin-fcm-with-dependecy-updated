@@ -1,8 +1,6 @@
 package com.hrs.firebase.messaging;
 
 import static android.content.Context.POWER_SERVICE;
-import static android.os.Build.VERSION.SDK_INT;
-import static android.os.Build.VERSION_CODES.LOLLIPOP;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -12,7 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.media.AudioAttributes;
+import android.graphics.BitmapFactory;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
@@ -22,7 +20,6 @@ import android.os.PowerManager;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import timber.log.Timber;
 
 public class GenericNotification {
     private static final String CHANNEL_ID = "generic_channel_id";
@@ -33,22 +30,25 @@ public class GenericNotification {
 
         createNotificationChannel(notificationManager);
 
-        int notificationId = Utils.createNotificationId((String) data.get("id"));
+        int notificationId = Utils.createNotificationId(data.getString("id"));
         PendingIntent pendingIntent = getPendingIntent(context, data, notificationId);
-        ApplicationInfo appInfo = context.getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
-        int defaultIcon = appInfo.metaData.getInt("com.google.firebase.messaging.default_notification_icon", 0);
+        ApplicationInfo appInfo = context.getPackageManager()
+            .getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
+        int largeIcon = appInfo.metaData.getInt("com.google.firebase.messaging.default_notification_icon", 0);
+        String title = data.optString("title", "");
+        String body = data.optString("body", "");
 
+        Notification.Builder builder = new Notification.Builder(context, CHANNEL_ID);
 
-        Notification.Builder builder = null;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            builder = new Notification.Builder(context, CHANNEL_ID)
-                .setContentTitle(data.getString("title"))
-                .setContentText(data.getString("body"))
-                .setSmallIcon(defaultIcon)
-                .setContentIntent(pendingIntent);
-        }
+        builder
+            .setSmallIcon(context.getResources().getIdentifier("ic_notification_tray", "drawable", context.getPackageName()))
+            .setContentTitle(title)
+            .setContentText(body)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .setLargeIcon(BitmapFactory.decodeResource(context.getResources(), largeIcon));
 
-        notificationManager.notify(notificationId, builder != null ? builder.build() : null);
+        notificationManager.notify(notificationId, builder.build());
         wakeUp(context);
     }
 
