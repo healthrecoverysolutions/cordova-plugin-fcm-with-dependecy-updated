@@ -15,6 +15,7 @@
 - (void)getInitialPushPayload:(CDVInvokedUrlCommand*)command;
 - (void)deleteInstanceId:(CDVInvokedUrlCommand*)command;
 - (void)clearAllNotifications:(CDVInvokedUrlCommand *)command;
+- (void)getDeliveredNotifications:(CDVInvokedUrlCommand *)command;
 - (void)subscribeToTopic:(CDVInvokedUrlCommand*)command;
 - (void)unsubscribeFromTopic:(CDVInvokedUrlCommand*)command;
 - (void)notifyOfMessage:(NSDictionary*) payload;

@@ -141,6 +141,27 @@ static FCMPlugin *fcmPluginInstance = nil;
   }];
 }
 
+- (void)getDeliveredNotifications:(CDVInvokedUrlCommand *)command {
+    DDLogDebug(@"getDeliveredNotifications()");
+    [self.commandDelegate runInBackground:^{
+        [[UNUserNotificationCenter currentNotificationCenter] getDeliveredNotificationsWithCompletionHandler:^(NSArray<UNNotification *> *notifications) {
+            NSMutableArray *results = [[NSMutableArray alloc] initWithCapacity:notifications.count];
+            for (UNNotification *notification in notifications) {
+                UNNotificationContent *content = notification.request.content;
+                NSMutableDictionary *notificationData = [content.userInfo mutableCopy];
+                if ([notificationData objectForKey:@"wasTapped"] == nil) { [notificationData setValue:@(NO) forKey:@"wasTapped"]; }
+                if ([notificationData objectForKey:@"title"] == nil) { [notificationData setValue:content.title forKey:@"title"]; }
+                if ([notificationData objectForKey:@"subtitle"] == nil) { [notificationData setValue:content.subtitle forKey:@"subtitle"]; }
+                if ([notificationData objectForKey:@"body"] == nil) { [notificationData setValue:content.body forKey:@"body"]; }
+                if ([notificationData objectForKey:@"badge"] == nil) { [notificationData setValue:content.badge forKey:@"badge"]; }
+                [results addObject:notificationData];
+            }
+            CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:results];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        }];
+    }];
+}
+
 - (void)subscribeToTopic:(CDVInvokedUrlCommand *)command {
     NSString* topic = [command.arguments objectAtIndex:0];
     DDLogDebug(@"subscribe To Topic %@", topic);
