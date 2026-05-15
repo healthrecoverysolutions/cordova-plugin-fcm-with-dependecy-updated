@@ -148,15 +148,16 @@ static FCMPlugin *fcmPluginInstance = nil;
             NSMutableArray *results = [[NSMutableArray alloc] initWithCapacity:notifications.count];
             for (UNNotification *notification in notifications) {
                 UNNotificationContent *content = notification.request.content;
-                NSMutableDictionary *notificationData = [content.userInfo mutableCopy];
-                if ([notificationData objectForKey:@"wasTapped"] == nil) { [notificationData setValue:@(NO) forKey:@"wasTapped"]; }
-                if ([notificationData objectForKey:@"title"] == nil) { [notificationData setValue:content.title forKey:@"title"]; }
-                if ([notificationData objectForKey:@"subtitle"] == nil) { [notificationData setValue:content.subtitle forKey:@"subtitle"]; }
-                if ([notificationData objectForKey:@"body"] == nil) { [notificationData setValue:content.body forKey:@"body"]; }
-                if ([notificationData objectForKey:@"badge"] == nil) { [notificationData setValue:content.badge forKey:@"badge"]; }
+                NSMutableDictionary *notificationData = [[NSMutableDictionary alloc] init];
+                notificationData[@"id"] = notification.request.identifier;
+                notificationData[@"title"] = content.title ?: @"";
+                notificationData[@"subtitle"] = content.subtitle ?: @"";
+                notificationData[@"body"] = content.body ?: @"";
+                notificationData[@"data"] = content.userInfo ?: @{};
                 [results addObject:notificationData];
             }
-            CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:results];
+            NSDictionary *resultDict = @{@"notifications": results};
+            CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:resultDict];
             [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
         }];
     }];
