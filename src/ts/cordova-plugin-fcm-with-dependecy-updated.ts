@@ -283,6 +283,10 @@ export class FirebaseMessagingCordovaInterface {
     public getDeliveredNotifications(): Promise<any> {
         return invoke('getDeliveredNotifications');
     }
+
+    public getDeliveredNotificationsWithoutClearing(): Promise<any> {
+        return invoke('getDeliveredNotificationsWithoutClearing');
+    }
 }
 
 export const FirebaseMessaging = new FirebaseMessagingCordovaInterface();

@@ -45,6 +45,7 @@ public class FCMPlugin extends CordovaPlugin {
     private static final String ACTION_DELETE_INSTANCE_ID = "deleteInstanceId";
     private static final String ACTION_HAS_PERMISSION = "hasPermission";
     private static final String ACTION_GET_DELIVERED_NOTIFICATIONS = "getDeliveredNotifications";
+    private static final String ACTION_PEEK_DELIVERED_NOTIFICATIONS = "peekDeliveredNotifications";
 
     private static final String EVENT_TYPE_NOTIFICATION = "notification";
     private static final String EVENT_TYPE_TOKEN_REFRESH = "tokenRefresh";
@@ -192,6 +193,10 @@ public class FCMPlugin extends CordovaPlugin {
                     break;
                 case ACTION_GET_DELIVERED_NOTIFICATIONS:
                     getDeliveredNotifications(callbackContext);
+                    break;
+                case ACTION_PEEK_DELIVERED_NOTIFICATIONS:
+                    peekDeliveredNotifications(callbackContext);
+                    break;
                 case ACTION_CLEAR_ALL_NOTIFICATIONS:
                     cordova.getThreadPool().execute(() -> {
                         try {
@@ -237,12 +242,31 @@ public class FCMPlugin extends CordovaPlugin {
         callbackContext.success();
     }
 
+     /**
+     *  Returns all currently stored/delivered Firebase notifications
+     *  and removes them from SharedPreferences storage.
+     */
     private void getDeliveredNotifications(CallbackContext callbackContext) {
         JSONObject result = null;
         try {
             SharedPreferencesManager sharedPreferencesManager = SharedPreferencesManager.getInstance(cordova.getContext());
             result = sharedPreferencesManager.getNotifications();
             sharedPreferencesManager.clearNotifications();
+            callbackContext.success(result);
+        } catch (JSONException e) {
+            callbackContext.error("Error fetching notifications: " + e.getMessage());
+        }
+    }
+
+    /**
+     *  Returns all currently stored/delivered Firebase notifications
+     *  without removing them from SharedPreferences storage.
+     */
+    private void peekDeliveredNotifications(CallbackContext callbackContext) {
+        JSONObject result = null;
+        try {
+            SharedPreferencesManager sharedPreferencesManager = SharedPreferencesManager.getInstance(cordova.getContext());
+            result = sharedPreferencesManager.getNotifications();
             callbackContext.success(result);
         } catch (JSONException e) {
             callbackContext.error("Error fetching notifications: " + e.getMessage());

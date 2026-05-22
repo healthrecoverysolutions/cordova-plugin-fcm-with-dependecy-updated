@@ -182,6 +182,9 @@ var FirebaseMessagingCordovaInterface = /** @class */ (function () {
     FirebaseMessagingCordovaInterface.prototype.getDeliveredNotifications = function () {
         return invoke('getDeliveredNotifications');
     };
+    FirebaseMessagingCordovaInterface.prototype.getDeliveredNotificationsWithoutClearing = function () {
+        return invoke('getDeliveredNotificationsWithoutClearing');
+    };
     return FirebaseMessagingCordovaInterface;
 }());
 exports.FirebaseMessagingCordovaInterface = FirebaseMessagingCordovaInterface;
