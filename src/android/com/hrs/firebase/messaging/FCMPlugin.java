@@ -192,6 +192,7 @@ public class FCMPlugin extends CordovaPlugin {
                     break;
                 case ACTION_GET_DELIVERED_NOTIFICATIONS:
                     getDeliveredNotifications(callbackContext);
+                    break;
                 case ACTION_CLEAR_ALL_NOTIFICATIONS:
                     cordova.getThreadPool().execute(() -> {
                         try {
